@@ -18,7 +18,11 @@ Source: https://appdevchallenge.auto-hmg.io/ (checked 2026-11-10). Re-check `/no
   - Section 5 covers implementation and your SDK/API usage plan.
 - **Optional, earns tiered bonus points:** demo video (mockup, prototype or screen recording is fine), GitHub repo, APK.
   - Put the APK in the repo at `apk/팀명_앱이름_release.apk`. It must be a signed, runnable **release** build. If it is too large, use GitHub Releases.
-  - You can use a private repo, but you must invite the announced reviewer account as a collaborator.
+  - A private repo is fine and no reviewer account needs to be invited (notice "비공개 GitHub 저장소 제출 방법", checked 2026-11-14).
+    Keep it private until the deadline (2026-11-15 23:59), write the repo URL and the final commit hash in the email,
+    then make it **public by 2026-11-16 (Mon)** and keep it public until the round-1 results (2026-11-23) — otherwise
+    the development-output bonus is not counted. If it cannot be made public, email a download link to a zip of the
+    source and APK before the deadline. Secrets (API keys) may be left out of the repo.
   - The README must state: app name, one-line description, how to run it, test environment, and the APK location or Release link.
 - Short-form video link: optional, no bonus points. It goes to a separate Short-form Challenge with a ₩500K prize.
 - Email: appdevchallenge@hyundai-partners.com
