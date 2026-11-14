@@ -23,29 +23,31 @@ dog = {
     "createdAt": NOW - 40 * DAY,
 }
 
-# (days ago, start hour, km, minutes, breaks, events after TRIP_START, mood, destination, note)
+# (days ago, start hour, km, minutes, events as (minute after departure, type), mood, destination, note)
+# Breaks follow the rule for 코코 (adult, mild motion sickness → every 90 min; the first stop a little early):
+# 속초 78 min → one break at 65 min; 강릉 140 min → breaks at 70 and 135 min (the second right before arrival).
 PAST = [
-    (13, 9,  42.0, 55, 1, ["BREAK_TAKEN"], "HAPPY", "양평", None),
-    (11, 18, 6.5, 14, 0, [], "OKAY", None, None),
-    (9,  8,  118.0, 140, 2, ["BELT_UNBUCKLED", "BREAK_TAKEN", "WINDOW_OPEN", "BREAK_TAKEN"], "STRESSED", "강릉", "휴게소에서 물을 잘 마셨어요"),
-    (7,  16, 12.3, 22, 0, ["BRAKE_BURST"], "OKAY", None, None),
-    (5,  10, 27.8, 38, 0, ["TEMP_OUT_OF_BAND", "CLIMATE_APPLIED"], "HAPPY", "애견 운동장", None),
-    (3,  19, 8.9, 17, 0, [], "HAPPY", None, None),
-    (1,  11, 63.4, 78, 1, ["BREAK_TAKEN", "CALM_ON", "CALM_OFF"], "HAPPY", "속초", "진정 음악에 잘 자더라고요"),
+    (13, 9,  42.0, 55, [], "HAPPY", "양평", None),
+    (11, 18, 6.5, 14, [], "OKAY", None, None),
+    (9,  8,  118.0, 140, [(12, "BELT_UNBUCKLED"), (70, "BREAK_TAKEN"), (95, "WINDOW_OPEN"), (135, "BREAK_TAKEN")], "STRESSED", "강릉", "휴게소에서 물을 잘 마셨어요"),
+    (7,  16, 12.3, 22, [(9, "BRAKE_BURST")], "OKAY", None, None),
+    (5,  10, 27.8, 38, [(14, "TEMP_OUT_OF_BAND"), (15, "CLIMATE_APPLIED")], "HAPPY", "애견 운동장", None),
+    (3,  19, 8.9, 17, [], "HAPPY", None, None),
+    (1,  11, 63.4, 78, [(20, "CALM_ON"), (65, "BREAK_TAKEN"), (72, "CALM_OFF")], "HAPPY", "속초", "진정 음악에 잘 자더라고요"),
 ]
 
 trips = []
 odo = 12000.0
-for days_ago, hour, km, minutes, breaks, evs, mood, dest, note in PAST:
+for days_ago, hour, km, minutes, evs, mood, dest, note in PAST:
+    breaks = sum(1 for _, t in evs if t == "BREAK_TAKEN")
     start = NOW - days_ago * DAY
     start -= (start % DAY)                          # midnight UTC of that day …
     start += int((hour - UTC_OFFSET) * 3600 * 1000)  # … shifted to the local hour in the recording zone
     end = start + minutes * 60 * 1000
     events = [{"at": start, "type": "TRIP_START", "detail": None}]
-    step = (end - start) // (len(evs) + 2)
-    for i, t in enumerate(evs, 1):
+    for minute, t in evs:
         detail = {"TEMP_OUT_OF_BAND": "25.0°C", "WINDOW_OPEN": "60%"}.get(t)
-        events.append({"at": start + step * i, "type": t, "detail": detail})
+        events.append({"at": start + minute * 60 * 1000, "type": t, "detail": detail})
     events.append({"at": end, "type": "TRIP_END", "detail": None})
     counts = {}
     for e in events:

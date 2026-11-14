@@ -243,4 +243,18 @@ class ComfortRulesTest {
         assertEquals(AlertLevel.CAUTION, hvacOffLevel(21f, band, ratePerMin = 0.05f))
         assertEquals(AlertLevel.CAUTION, hvacOffLevel(null, band, ratePerMin = null))
     }
+
+    @Test
+    fun `durations round to the nearest minute everywhere`() {
+        assertEquals(1, wholeMinutes(45))      // the check-in and the list must agree: 45 s is "1분" in both
+        assertEquals(0, wholeMinutes(29)); assertEquals(1, wholeMinutes(30)); assertEquals(78, wholeMinutes(78 * 60 + 20))
+    }
+
+    @Test
+    fun `parking-lot moves are not footprints`() {
+        assertFalse(isTripWorthRecording(distanceKm = 0.4f, drivingSec = 120))
+        assertTrue(isTripWorthRecording(distanceKm = 1.0f, drivingSec = 60))
+        assertTrue(isTripWorthRecording(distanceKm = 0.2f, drivingSec = 180))
+        assertFalse(isTripWorthRecording(distanceKm = 0.99f, drivingSec = 179))
+    }
 }

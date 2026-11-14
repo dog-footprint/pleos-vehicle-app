@@ -65,6 +65,8 @@ class AppRepository(private val store: DataStore<AppData>) {
 
     suspend fun setLastMeal(at: Long?) = update { it.copy(lastMealAt = at) }
 
+    suspend fun removeTrip(id: String) = update { d -> d.copy(trips = d.trips.filterNot { it.id == id }) }
+
     suspend fun upsertTrip(trip: Trip) = update { d ->
         val trips = if (d.trips.any { it.id == trip.id }) d.trips.map { if (it.id == trip.id) trip else it } else d.trips + trip
         d.copy(trips = trips.takeLast(MAX_TRIPS))

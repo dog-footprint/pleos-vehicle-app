@@ -25,6 +25,13 @@ Tried in order (3rd review G1):
    time; the captions of those scenes carry "(음성 재현)". `scripts/check-demo.py` then verifies ≥ −35 dB within
    ±2 s of every line and that no frame shows the Settings tab; a failure makes the render exit non-zero.
 
+## Mix levels
+
+`make-demo-video.sh` uses fixed gains, not `loudnorm` (single-pass loudnorm adapts over time and pumped the quiet
+background up to full level): capture +6 dB (the app's calm music then peaks around −5 dB), synthesized
+voice as rendered (peaks ≈ −3 dB), background bed (`calm_aria.m4a`, CC0) at −20 dB from the first frame, gated off
+while the app's own music plays and side-chain ducked under every voice line, then a limiter at 0.9.
+
 ## Live PT: does the emulator's navigation bus reach the host speakers?
 
 Do this once on the presentation laptop before the session:

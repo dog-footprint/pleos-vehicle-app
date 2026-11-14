@@ -335,14 +335,14 @@
     <string name="guide_leave_prep">If %1$s stays in the car, leave the climate on.</string>
     <string name="guide_climate_kept">Climate left on. It stays on while the car is on.</string>
     <string name="pre_exit_title_fmt">Leaving %1$s in the car?</string>
-    <string name="pre_exit_ok_fmt">Cabin %1$d° · climate on. See you soon</string>
+    <string name="pre_exit_ok">See you soon</string>
     <string name="pre_exit_keep">Turn climate on</string>
     <string name="pre_exit_keep_hint">Stays on only while the car is on</string>
     <string name="pre_exit_release_hint">Leave the climate on and use utility mode</string>
     <string name="pre_exit_together_fmt">%1$s gets out too</string>
     <string name="pre_exit_limit">The app stops when the car is off. Check before you leave</string>
     <string name="pet_alone_summary_fmt">Alone %1$d min · peak %2$d°</string>
-    <string name="pet_alone_summary_now_fmt">Just left alone · cabin %1$d°</string>
+    <string name="pet_alone_summary_now">Just left alone</string>
     <string name="pet_alone_risk_hvac_fmt">Cabin %1$d° · climate off — turn it on as soon as you are back</string>
     <string name="pet_alone_risk_temp_fmt">Cabin %1$d° — turn the climate on as soon as you are back</string>
     <string name="pet_alone_back_hint">Clears when you drive off</string>
@@ -366,4 +366,5 @@
     <string name="pre_exit_line_off_fmt">Range %1$.0f–%2$.0f°C · climate off</string>
     <string name="pet_alone_hvac_caution_fmt">Cabin %1$d° · climate off — turn it on when you are back</string>
     <string name="action_close">Close</string>
+    <string name="pre_exit_line_off_prefix_fmt">Range %1$.0f–%2$.0f°C · </string>
 </resources>

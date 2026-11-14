@@ -22,9 +22,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.dogfootprint.app.R
 import com.dogfootprint.app.care.BreakPhase
@@ -294,7 +304,7 @@ private fun DrivingHome(vm: CareViewModel, state: CareState, compact: Boolean) {
         Spacer(Modifier.weight(1f))
         // Number · verdict · band · next break read as one group; the seat map beside it says which seat (wide window only).
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
+            Column {   // intrinsic width, so the seat map sits right beside the block (space24), not at the far edge
                 TempHero(state, showDelta = false)
                 PleosStatusLine(
                     if (state.breakPhase == BreakPhase.DUE) R.drawable.ic_local_cafe else R.drawable.ic_schedule, status,
@@ -328,12 +338,13 @@ private fun SeatMap(state: CareState) {
     val danger = state.climate?.verdict == ClimateVerdict.HEAT_ALERT || state.climate?.verdict == ClimateVerdict.HVAC_OFF
     val fallback = state.vehicle.zoneTempFallback
     val highlighted: Set<DogSeat?> = if (fallback) setOf(null) else setOf(dog.seat)   // null = driver/front-left sensor
+    val cell = PleosDims.iconButtonMedium   // 80
     @Composable
-    fun seat(seat: DogSeat?, wide: Boolean = false) {
+    fun seat(seat: DogSeat?, width: androidx.compose.ui.unit.Dp = cell) {
         val on = seat in highlighted
         Box(
             Modifier
-                .size(width = if (wide) PleosDims.gnbButton * 3 + PleosDims.space12 * 2 else PleosDims.gnbButton, height = PleosDims.gnbButton)
+                .size(width = width, height = cell)
                 .clip(PleosDims.radiusSmall)
                 .then(
                     when {
@@ -344,23 +355,47 @@ private fun SeatMap(state: CareState) {
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            if (on) PleosIcon(if (fallback) R.drawable.ic_thermostat else R.drawable.ic_pets, if (danger) c.onButtonFilled else c.textSecondary)
+            if (on) PleosIcon(if (fallback) R.drawable.ic_thermostat else R.drawable.ic_pets, if (danger) c.onButtonFilled else c.textSecondary, size = PleosDims.iconSmall)
         }
     }
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
-        // Car outline: front row, rear row, cargo at the back — all inside one thin rounded line.
+    // One car-shaped outline (narrow front, full-width body; GenericShape with the large radius token) around the
+    // three rows, all centred on the same axis. Front inset = space32, the same amount the front row is narrower.
+    val rearWidth = cell * 3 + PleosDims.space12 * 2
+    val inset = PleosDims.space32
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Column(
-            Modifier.border(PleosDims.dividerWidth, c.textSecondary, PleosDims.radiusLarge).padding(PleosDims.space16),
+            Modifier.width(rearWidth + PleosDims.space24 * 2).border(PleosDims.dividerWidth, c.textSecondary, CarOutline(inset)).padding(PleosDims.space24),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(PleosDims.space12),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) { seat(null); seat(DogSeat.ROW_1_RIGHT) }
+            Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12 + inset)) { seat(null); seat(DogSeat.ROW_1_RIGHT) }
             Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) { seat(DogSeat.ROW_2_LEFT); seat(DogSeat.ROW_2_CENTER); seat(DogSeat.ROW_2_RIGHT) }
-            seat(DogSeat.CARGO, wide = true)
+            seat(DogSeat.CARGO, width = rearWidth)
         }
-        Text(
-            if (fallback) stringResource(R.string.seat_map_sensor_note) else stringResource(R.string.seat_map_label) + " · " + stringResource(dog.seat.labelRes),
-            style = PleosType.labelMedium, color = c.textTertiary,
-        )
+        if (fallback) Text(stringResource(R.string.seat_map_sensor_note), style = PleosType.labelMedium, color = c.textTertiary, modifier = Modifier.padding(top = PleosDims.space8))
+    }
+}
+
+/** Top view of a car: the front (top) edge is inset on both sides and rounded; the body is a rounded rectangle. */
+private class CarOutline(private val frontInset: androidx.compose.ui.unit.Dp) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val r = with(density) { 32.dp.toPx() }          // radius level9 (PleosDims.radiusLarge)
+        val inset = with(density) { frontInset.toPx() }
+        val front = size.height * 0.34f                 // where the body reaches full width (just behind the front row)
+        val path = Path().apply {
+            moveTo(inset + r, 0f)
+            lineTo(size.width - inset - r, 0f)
+            quadraticTo(size.width - inset, 0f, size.width - inset, r)
+            quadraticTo(size.width - inset, front, size.width, front + r)
+            lineTo(size.width, size.height - r)
+            quadraticTo(size.width, size.height, size.width - r, size.height)
+            lineTo(r, size.height)
+            quadraticTo(0f, size.height, 0f, size.height - r)
+            lineTo(0f, front + r)
+            quadraticTo(inset, front, inset, r)
+            quadraticTo(inset, 0f, inset + r, 0f)
+            close()
+        }
+        return Outline.Generic(path)
     }
 }
 
@@ -385,15 +420,21 @@ private fun PreExitHome(vm: CareViewModel, state: CareState) {
         Spacer(Modifier.weight(1f))
         TempHero(state, showDelta = false, showBand = false)
         state.band?.let { band ->
-            Text(
-                if (v.hvacPower == false) stringResource(R.string.pre_exit_line_off_fmt, band.lower, band.upper)
-                else stringResource(R.string.pre_exit_line_fmt, band.lower, band.upper, v.targetTemp ?: 0f, v.fanSpeed?.toString() ?: "—"),
-                style = PleosType.bodyLarge, color = if (v.hvacPower == false) tint else c.textSecondary,
-            )
+            if (v.hvacPower == false) {
+                Text(
+                    buildAnnotatedString {
+                        append(stringResource(R.string.pre_exit_line_off_prefix_fmt, band.lower, band.upper))
+                        withStyle(SpanStyle(color = tint, fontWeight = FontWeight.Bold)) { append(stringResource(R.string.pet_alone_hvac_off_short2)) }
+                    },
+                    style = PleosType.bodyLarge, color = c.textSecondary,
+                )
+            } else {
+                Text(stringResource(R.string.pre_exit_line_fmt, band.lower, band.upper, v.targetTemp ?: 0f, v.fanSpeed?.toString() ?: "—"), style = PleosType.bodyLarge, color = c.textSecondary)
+            }
         }
         Spacer(Modifier.height(PleosDims.space24))
         when {
-            action == null -> PleosStatusLine(R.drawable.ic_check_circle, stringResource(R.string.pre_exit_ok_fmt, v.zoneTemp?.roundToInt() ?: 0), tint = c.textPrimary, style = PleosType.bodyLargeStrong)
+            action == null -> PleosStatusLine(R.drawable.ic_check_circle, stringResource(R.string.pre_exit_ok), tint = c.textPrimary, style = PleosType.bodyLargeStrong)
             !canAct -> PleosStatusLine(if (level == AlertLevel.DANGER) R.drawable.ic_error else R.drawable.ic_warning, climateActionGuide(action), tint = tint, style = PleosType.bodyLargeStrong)
         }
         Spacer(Modifier.weight(1f))
@@ -428,7 +469,7 @@ private fun PetAloneHome(vm: CareViewModel, state: CareState) {
         Text(stringResource(R.string.pet_alone_title_fmt, dog.name), style = PleosType.headlineSmall, color = c.textPrimary)
         // The record first, large, right under the title — what the returning driver wants to know.
         Text(
-            if (aloneMin < 1) stringResource(R.string.pet_alone_summary_now_fmt, temp)
+            if (aloneMin < 1) stringResource(R.string.pet_alone_summary_now)
             else stringResource(R.string.pet_alone_summary_fmt, aloneMin, state.petAloneMaxTemp?.roundToInt() ?: temp),
             style = PleosType.titleMedium, color = c.textPrimary, modifier = Modifier.padding(top = PleosDims.space8),
         )

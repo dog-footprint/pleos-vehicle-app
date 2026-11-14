@@ -307,8 +307,12 @@ class CareEngine(
         )
         clearTripState()
         driverDoorCycled = false; petAloneSince = null
-        _state.update { it.afterTripEnd().copy(pendingCheckIn = if (mood == null) done else null) }
-        scope.launch { repo.upsertTrip(done); repo.setAboard(null); repo.setLastMeal(null) }
+        val worth = isTripWorthRecording(done.distanceKm, done.drivingSec)
+        _state.update { it.afterTripEnd().copy(pendingCheckIn = if (mood == null && worth) done else null) }
+        scope.launch {
+            if (worth) repo.upsertTrip(done) else repo.removeTrip(done.id)   // the 30 s snapshot may already be stored
+            repo.setAboard(null); repo.setLastMeal(null)
+        }
     }
 
     /** Mood chosen on the Home check-in card (one tap saves). */

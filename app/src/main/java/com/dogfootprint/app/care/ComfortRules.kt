@@ -293,8 +293,13 @@ fun hvacOffLevel(zoneTemp: Float?, band: ComfortBand?, ratePerMin: Float?): Aler
 fun isPreExit(aboard: Boolean, moving: Boolean, gearPark: Boolean?, driverDoorOpen: Boolean?, petAlone: Boolean): Boolean =
     aboard && !moving && (gearPark ?: true) && driverDoorOpen == true && !petAlone
 
-/** Minutes shown to the driver instead of a ticking clock: "1시간 30분" granularity is the rule while moving. */
+/** Every duration the driver sees goes through this (check-in, Footprints list, break line): nearest whole minute. */
 fun wholeMinutes(sec: Int): Int = (sec + 30) / 60
+
+/** Parking-lot shuffles are not footprints: a trip is recorded only from 1 km or 3 minutes of driving. */
+const val TRIP_MIN_KM = 1f
+const val TRIP_MIN_SEC = 180
+fun isTripWorthRecording(distanceKm: Float, drivingSec: Int): Boolean = distanceKm >= TRIP_MIN_KM || drivingSec >= TRIP_MIN_SEC
 
 fun windowOpenFraction(position: Int?, max: Int?): Float? =
     if (position == null || max == null || max <= 0) null else (position.toFloat() / max).coerceIn(0f, 1f)

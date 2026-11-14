@@ -272,6 +272,7 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
       <tr><td>주행 중 화면 규칙</td><td>온도(정수) 하나 · 상태 한 줄(분 단위 휴식) · 경고 슬롯 하나 · 버튼 최대 둘. 초 단위 숫자·통계·프로필 설명 없음</td><td class="src">Pleos 주행 안전 가이드</td></tr>
       <tr><td>하차 확인</td><td>10분 이상 정차하면 "하차했나요?" 팝업</td><td class="src">Vehicle: gear</td></tr>
       <tr><td>여행 종료</td><td>"내리기" 또는 10분 정차 확인 → 홈에 요약 카드(거리 · 시간 · 휴식 · 편안함) + 기분 한 번 탭 저장(좋았어요 / 보통이에요 / 힘들었어요), 메모는 정차 중 보조 버튼. 휴식·식사·탑승 상태는 모두 초기화</td><td class="src">—</td></tr>
+      <tr><td>기록 조건</td><td>1 km 이상 또는 3분 이상 주행한 여행만 발자국에 남김(주차장 이동 제외); 표시 시간은 모두 분 단위 반올림</td><td class="src">ComfortRules.isTripWorthRecording · wholeMinutes</td></tr>
       <tr><td>저장 항목</td><td>거리 · 시간 · 휴식 횟수 · 배터리 사용 · 출발/도착 좌표 · 이벤트 타임라인 · 편안함 지수 · 기분</td><td class="src">Vehicle: EV SoC · FusedLocation</td></tr>
     </table></div></div>
   </article>
@@ -341,22 +342,22 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
 </section>
 
 <section id="demo">
-  <header><h2>데모 영상 <span style="color:var(--fg-3);font-weight:500">3분 15초</span></h2><p><code>docs/demo/dog-footprint-demo.mp4</code> — 에뮬레이터 화면을 녹화하고 아래에 자막 띠를 붙였습니다. 음성 안내는 에뮬레이터 캡처에 담기지 않는 내비 버스로 나가기 때문에 같은 문장을 macOS 음성으로 재현해 넣었습니다(해당 장면 자막에 "음성 재현"). 시각은 영상 기준입니다.</p></header>
+  <header><h2>데모 영상 <span style="color:var(--fg-3);font-weight:500">3분 11초</span></h2><p><code>docs/demo/dog-footprint-demo.mp4</code> — 에뮬레이터 화면을 녹화하고 아래에 자막 띠를 붙였습니다. 음성 안내는 에뮬레이터 캡처에 담기지 않는 내비 버스로 나가기 때문에 같은 문장을 macOS 음성으로 재현해 넣었습니다(해당 장면 자막에 "음성 재현"). 시각은 영상 기준입니다.</p></header>
   <ol class="timeline">
     <li><span class="t">0:01</span><div class="what"><b>인트로</b><span>문제 제기(McLaren 2005 · Hall 2020 수치) + 정차 홈, 음성 재현 안내 한 번</span></div></li>
     <li><span class="t">0:06</span><div class="what"><b>프로필</b><span>변경 → 소형 → 퍼그: 적정 범위 19–21 °C · 휴식 90분으로 바뀜 → 다시 허스키 (10초)</span></div></li>
     <li><span class="t">0:16</span><div class="what"><b>태우기</b><span>코코 태우기 → 마지막 식사 1시간 전 → 탑승 직후 하네스 주의</span></div></li>
-    <li><span class="t">0:32</span><div class="what"><b>하네스</b><span>착용 확인 → 주의 사라짐</span></div></li>
-    <li><span class="t">0:37</span><div class="what"><b>출발</b><span>주행 화면: 온도 · 판정 · 다음 휴식 · 진정 사운드 재생/정지</span></div></li>
-    <li><span class="t">1:08</span><div class="what"><b>열사병</b><span>(시뮬레이션 27 °C) 위험 배너 + 자동 조절 (차량 제어 실험 기능)</span></div></li>
-    <li><span class="t">1:29</span><div class="what"><b>창문</b><span>뒷좌석 창문 60 % → 창문을 올려 주세요</span></div></li>
-    <li><span class="t">1:39</span><div class="what"><b>휴식</b><span>(90분 경과 가정) 쉴 시간 → 휴식 완료</span></div></li>
-    <li><span class="t">1:54</span><div class="what"><b>도착</b><span>P 전환, 실내가 더우면 공조를 켜 두라는 주의 + 음성</span></div></li>
-    <li><span class="t">2:06</span><div class="what"><b>내리기 전 확인</b><span>운전석 문 열림 → 코코를 두고 내리시나요? 공조 켜짐+더움이라 "설정 20°C로 낮추기" → 정상 확인</span></div></li>
-    <li><span class="t">2:31</span><div class="what"><b>펫 단독</b><span>(30초 후) 코코 혼자 있어요 — 시간 · 최고 온도</span></div></li>
-    <li><span class="t">2:37</span><div class="what"><b>복귀</b><span>문 다시 열림 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 완료</span></div></li>
-    <li><span class="t">2:59</span><div class="what"><b>발자국</b><span>최근 2주 기록 목록, 속초 63 km 상세(이벤트 · 지수 이유)로 마무리</span></div></li>
-    <li><span class="t">3:12</span><div class="what"><b>아웃트로</b><span></span></div></li>
+    <li><span class="t">0:31</span><div class="what"><b>하네스</b><span>착용 확인 → 주의 사라짐</span></div></li>
+    <li><span class="t">0:36</span><div class="what"><b>출발</b><span>주행 화면: 온도 · 판정 · 다음 휴식 · 진정 사운드 재생/정지</span></div></li>
+    <li><span class="t">1:05</span><div class="what"><b>열사병</b><span>(시뮬레이션 27 °C) 위험 배너 + 자동 조절 (차량 제어 실험 기능)</span></div></li>
+    <li><span class="t">1:26</span><div class="what"><b>창문</b><span>뒷좌석 창문 60 % → 창문을 올려 주세요</span></div></li>
+    <li><span class="t">1:35</span><div class="what"><b>휴식</b><span>(90분 경과 가정) 쉴 시간 → 휴식 완료</span></div></li>
+    <li><span class="t">1:49</span><div class="what"><b>도착</b><span>P 전환, 실내가 더우면 공조를 켜 두라는 주의 + 음성</span></div></li>
+    <li><span class="t">2:05</span><div class="what"><b>내리기 전 확인</b><span>운전석 문 열림 → 코코를 두고 내리시나요? 공조 켜짐+더움이라 "설정 20°C로 낮추기" → 정상 확인</span></div></li>
+    <li><span class="t">2:27</span><div class="what"><b>펫 단독</b><span>(30초 후) 코코 혼자 있어요 — 시간 · 최고 온도</span></div></li>
+    <li><span class="t">2:33</span><div class="what"><b>복귀</b><span>문 다시 열림 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 기록 자세히 보기</span></div></li>
+    <li><span class="t">2:54</span><div class="what"><b>발자국</b><span>이번 드라이브 상세에서 바로 속초 63 km 상세(이벤트 · 휴식 65분 · 지수 이유)로 마무리</span></div></li>
+    <li><span class="t">3:08</span><div class="what"><b>아웃트로</b><span></span></div></li>
   </ol>
   <div class="two">
     <div><h3>영상에 들어간 기능</h3><ul>
@@ -419,7 +420,7 @@ scripts/vehicle-sim.sh gear Drive &amp;&amp; scripts/vehicle-sim.sh odometer +0.
       <li>심사위원이 직접 누를 수 있는 것: 탑승(식사 팝업), 자동 조절, 진정 사운드, 휴식 완료, 여행 종료, 설정의 개발자 버튼</li>
       <li>진행자가 옆에서 신호를 넣는 것: <code>vehicle-sim.sh window rl 60</code>, <code>brake</code>, <code>gear</code> — 터미널 한 줄씩</li>
       <li>소리가 중요한 장면(음성 안내, 음악)은 에뮬레이터 오디오를 스피커로 출력</li>
-      <li>보험: 데모 영상(3:15)을 같은 화면에 띄울 수 있게 준비</li>
+      <li>보험: 데모 영상(3:11)을 같은 화면에 띄울 수 있게 준비</li>
     </ol>
   </div>
 

@@ -345,14 +345,14 @@
     <string name="guide_leave_prep">%1$s를 두고 내리면 공조를 켜 두세요.</string>
     <string name="guide_climate_kept">공조를 켜 두었어요. 시동을 켜 둔 동안 유지돼요.</string>
     <string name="pre_exit_title_fmt">%1$s를 두고 내리시나요?</string>
-    <string name="pre_exit_ok_fmt">실내 %1$d° · 공조 켜짐. 다녀오세요</string>
+    <string name="pre_exit_ok">다녀오세요</string>
     <string name="pre_exit_keep">공조 켜기</string>
     <string name="pre_exit_keep_hint">시동을 켜 둔 동안만 유지돼요</string>
     <string name="pre_exit_release_hint">공조를 켜 두고, 유틸리티 모드로 내리세요</string>
     <string name="pre_exit_together_fmt">%1$s도 같이 내려요</string>
     <string name="pre_exit_limit">차량이 꺼지면 앱도 꺼져요. 내리기 전에 확인하세요</string>
-    <string name="pet_alone_summary_fmt">혼자 %1$d분 · 그동안 최고 %2$d°</string>
-    <string name="pet_alone_summary_now_fmt">방금 혼자 남았어요 · 실내 %1$d°</string>
+    <string name="pet_alone_summary_fmt">혼자 %1$d분 · 최고 %2$d°</string>
+    <string name="pet_alone_summary_now">방금 혼자 남았어요</string>
     <string name="pet_alone_risk_hvac_fmt">실내 %1$d° · 공조 꺼짐 — 돌아오면 바로 공조를 켜 주세요</string>
     <string name="pet_alone_risk_temp_fmt">실내 %1$d° — 돌아오면 바로 공조를 켜 주세요</string>
     <string name="pet_alone_back_hint">출발하면 해제돼요</string>
@@ -377,4 +377,5 @@
     <string name="pre_exit_line_off_fmt">적정 %1$.0f–%2$.0f°C · 공조 꺼짐</string>
     <string name="pet_alone_hvac_caution_fmt">실내 %1$d° · 공조 꺼짐 — 돌아오면 공조를 켜 주세요</string>
     <string name="action_close">닫기</string>
+    <string name="pre_exit_line_off_prefix_fmt">적정 %1$.0f–%2$.0f°C · </string>
 </resources>

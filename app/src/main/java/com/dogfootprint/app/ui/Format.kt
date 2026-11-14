@@ -35,12 +35,9 @@ fun isKorean(): Boolean = Locale.getDefault().language == "ko"
 
 fun breedName(key: String): String = if (key.isBlank()) "—" else BreedPresets.byKey(key).let { if (isKorean()) it.nameKo else it.nameEn }
 
+/** Every duration the driver reads ("1시간 18분", "3분") — same rounding everywhere (ComfortRules.wholeMinutes). */
 @Composable
-fun durationText(sec: Int): String {
-    val h = sec / 3600
-    val m = (sec % 3600) / 60
-    return if (h > 0) stringResource(R.string.duration_h_m, h, m) else stringResource(R.string.duration_m, m)
-}
+fun durationText(sec: Int): String = minutesText(sec)
 
 fun clockText(sec: Int): String {
     val h = sec / 3600

@@ -165,11 +165,11 @@ prepare() {               # bring the app to the state scene N expects, without 
   if [[ $n -ge 4 ]]; then tap "태우기"; sleep 3; tap "1시간 전"; sleep 2; fi
   if [[ $n -ge 5 ]]; then demo belt_on; sleep 1; fi
   if [[ $n -ge 6 && $n -le 8 ]]; then drive_start; sleep 8; fi
-  if [[ $n -ge 9 ]]; then drive_start; sleep 8; demo hot; sleep 1; drive_stop; sleep 3; fi
+  if [[ $n -ge 9 ]]; then drive_start; sleep 62; demo hot; sleep 5; drive_stop; sleep 3; fi   # ≥ 1 km, or the trip is not recorded (no check-in)
   if [[ $n -ge 10 ]]; then $V door fl 1 >/dev/null; sleep 4; fi
   if [[ $n -ge 11 ]]; then demo clear; $V door fl 0 >/dev/null; [[ $n -ge 12 ]] && sleep 36; fi
   if [[ $n -ge 12 ]]; then $V door fl 1 >/dev/null; sleep 4; fi
-  if [[ $n -ge 13 ]]; then tap "내리기"; sleep 3; tap "좋았어요"; sleep 1; tap "완료"; sleep 2; fi
+  if [[ $n -ge 13 ]]; then tap "내리기" 1653 1173; sleep 3; tap "좋았어요" 1152 800; sleep 1; tap "기록 자세히 보기" 1352 931; sleep 2; fi
 }
 
 # ---------------------------------------------------------------- scenes (captions describe only what is on screen)
@@ -189,16 +189,16 @@ s6()  { scene 6 heat "(시뮬레이션 27°C) 열사병 위험 → 자동 조절
 s7()  { scene 7 window "뒷좌석 창문 60% 열림 → 창문을 올려 주세요"; $V window rl 60 >/dev/null; sleep 7; $V window rl 0 >/dev/null; sleep 2; }
 s8()  { scene 8 break "(90분 경과 가정) 쉴 시간 → 휴식 완료"; demo break; sleep 7; tap "휴식 완료"; sleep 3; }
 s9()  { scene 9 arrive "도착 · P — 실내가 더우면(시뮬레이션 27°C) 내리기 전에 공조를 켜 두라고 미리 알립니다"
-        demo hot; sleep 2; drive_stop; sleep 8; stop_segment; }
+        demo hot; sleep 6; drive_stop; sleep 8; stop_segment; }   # a few more seconds of driving keeps the trip above the 1 km record threshold
 s10() { scene 10 preexit "운전석 문 열림 — 코코를 두고 내리시나요? 설정 20°C로 낮추기 (차량 제어 실험 기능)"
         $V door fl 1 >/dev/null; sleep 6; tap "낮추기" 1330 1230; sleep 4; demo clear; sleep 5
         $V door fl 0 >/dev/null; sleep 2; stop_segment; }          # the door closing ends this segment
 s11() { sleep 36                                                    # 30 s grace, cut from the video
         scene 11 alone "문 닫힘 (30초 후) — 코코 혼자 있어요: 혼자 있은 시간과 최고 온도를 기록"; sleep 6; }
-s12() { scene 12 return "운전자 복귀 — 기록 확인 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭"
-        $V door fl 1 >/dev/null; sleep 5; tap "내리기" 1104 1186; sleep 4; tap "좋았어요" 1155 769; sleep 3; tap "완료" 1092 1210; sleep 2; }
-s13() { scene 13 footprints "발자국: 최근 2주 기록 — 속초 63 km 상세: 이벤트와 편안함 지수 이유"
-        rail 발자국; sleep 3; tap "속초"; sleep 7; }
+s12() { scene 12 return "운전자 복귀 — 기록 확인 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 기록 자세히 보기"
+        $V door fl 1 >/dev/null; sleep 5; tap "내리기" 1653 1173; sleep 4; tap "좋았어요" 1152 800; sleep 3; tap "기록 자세히 보기" 1352 931; sleep 1; }
+s13() { scene 13 footprints "발자국: 이번 드라이브 → 속초 63 km 상세: 이벤트와 편안함 지수 이유"
+        sleep 4; tap "속초"; sleep 7; }
 s14() { scene 14 outro "dog-footprint — 반려견 자리의 온도 한 숫자, 판정 한 단어"; sleep 3; }
 
 # ---------------------------------------------------------------- run

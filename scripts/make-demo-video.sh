@@ -42,7 +42,7 @@ marks = json.load(open(f"{indir}/events.json")) if os.path.exists(f"{indir}/even
 abs_marks = {m["name"]: round(offsets[m["segment"]] + m["t_in_segment"], 2) for m in marks if m["segment"] in offsets}
 if "calm_on" in abs_marks and "calm_off" in abs_marks:
     json.dump({"on": abs_marks["calm_on"], "off": abs_marks["calm_off"]}, open(f"{indir}/calm_range.json", "w"))
-bed_from = next((s["start"] for s in scenes if s["id"] == "return"), None)   # low CC0 bed under the quiet tail
+bed_from = 0.0   # low CC0 bed from the first frame; sidechain-ducked under the voice lines, silenced while the app's own music plays
 
 W, H = 1920, 120
 font = ImageFont.truetype("/System/Library/Fonts/AppleSDGothicNeo.ttc", 36)
@@ -92,17 +92,33 @@ chain.append("".join(f"[{k}:v][a{k}]" for k in range(n_seg)) + f"concat=n={n_seg
 base_idx = n_seg + len(filters)
 delayed = []
 for n, ms in voice_chain:
-    chain.append(f"[{base_idx + n}:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=1.6,adelay={ms}|{ms}[vo{n}]"); delayed.append(f"[vo{n}]")
+    chain.append(f"[{base_idx + n}:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=1.0,adelay={ms}|{ms}[vo{n}]"); delayed.append(f"[vo{n}]")
 next_idx = base_idx + len(voice_chain)
-if bed_from is not None and os.path.exists(bed):
-    ms = int(bed_from * 1000)
-    chain.append(f"[{next_idx}:a]aformat=sample_rates=48000:channel_layouts=stereo,volume=0.07,adelay={ms}|{ms}[bed]"); delayed.append("[bed]")
-    next_idx += 1
+voice_mix = None
 if delayed:
-    chain.append(f"[ca]{''.join(delayed)}amix=inputs={1 + len(delayed)}:duration=first:normalize=0[mix]")
-    chain.append("[mix]loudnorm=I=-16:TP=-1.5:LRA=11[aout]")
+    chain.append(f"{''.join(delayed)}amix=inputs={len(delayed)}:duration=longest:normalize=0,apad[voice]")
+    voice_mix = "[voice]"
+if bed_from is not None and os.path.exists(bed):
+    # Loop the bed for the whole length, drop it while the app's calm music plays (same piece), then duck it
+    # under the synthesized voice with a sidechain compressor.
+    calm_gate = f",volume=enable='between(t,{abs_marks['calm_on']},{abs_marks['calm_off']})':volume=0" if "calm_on" in abs_marks and "calm_off" in abs_marks else ""
+    chain.append(f"[{next_idx}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},aformat=sample_rates=48000:channel_layouts=stereo,volume=0.1{calm_gate}[bedraw]")
+    next_idx += 1
+    # Fixed gains instead of single-pass loudnorm (which adapts over time and pumped the bed up to full level):
+    # capture +18 dB (the emulator records the app's music around -36 dB), voice as rendered, bed -20 dB.
+    chain.append("[ca]volume=2[cag]")
+    if voice_mix:
+        chain.append(f"{voice_mix}asplit=2[vkey][vmix]")
+        chain.append("[bedraw][vkey]sidechaincompress=threshold=0.02:ratio=12:attack=20:release=600[bed]")
+        chain.append("[cag][vmix][bed]amix=inputs=3:duration=first:normalize=0[mix]")
+    else:
+        chain.append("[cag][bedraw]amix=inputs=2:duration=first:normalize=0[mix]")
+    chain.append("[mix]alimiter=limit=0.9:level=false[aout]")
+elif voice_mix:
+    chain.append(f"[ca]volume=2[cag];[cag]{voice_mix}amix=inputs=2:duration=first:normalize=0[mix]")
+    chain.append("[mix]alimiter=limit=0.9:level=false[aout]")
 else:
-    chain.append("[ca]loudnorm=I=-16:TP=-1.5:LRA=11[aout]")
+    chain.append("[ca]volume=2,alimiter=limit=0.9:level=false[aout]")
 note_idx = next_idx if note_path else None
 chain.append("[cv]scale=1920:1080:flags=lanczos,pad=1920:1200:0:0:color=#131417[base]")
 prev = "[base]"
