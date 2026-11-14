@@ -11,8 +11,10 @@ import ai.pleos.playground.vehicle.constant.control.VehicleGear
 import android.content.Context
 import android.util.Log
 import com.dogfootprint.app.R
-import com.dogfootprint.app.audio.CalmingSoundPlayer
+import com.dogfootprint.app.audio.CalmingPlayer
+import com.dogfootprint.app.data.AgeGroup
 import com.dogfootprint.app.data.AppData
+import com.dogfootprint.app.data.CalmMode
 import com.dogfootprint.app.data.AppRepository
 import com.dogfootprint.app.data.DogProfile
 import com.dogfootprint.app.data.DogSeat
@@ -113,6 +115,9 @@ data class CareState(
     /** Parked, dog on board, driver's door opened and closed → the dog is alone in the car. */
     val petAlone: Boolean = false,
     val petAloneSince: Long? = null,
+    /** AAHA life stage from the birth date (or the manual value). */
+    val lifeStage: AgeGroup? = null,
+    val mealNotice: MealNotice = MealNotice.NONE,
     val diagnostics: Diagnostics = Diagnostics(),
     val demoTemp: Float? = null,
 ) {
@@ -131,7 +136,7 @@ class CareEngine(
     private val navi: NaviSource,
     private val location: LocationSource,
     private val voice: VoiceGuide,
-    private val calm: CalmingSoundPlayer,
+    private val calm: CalmingPlayer,
     private val actuatorFor: (controlEnabled: Boolean) -> ClimateActuator,
     private val scope: CoroutineScope,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -227,6 +232,13 @@ class CareEngine(
         scope.launch { repo.setAboard(if (on) dog.id else null) }
     }
 
+    /** Boarding with the last meal time (null = unknown). Warns once if the meal was under two hours ago. */
+    fun board(lastMealAt: Long?) {
+        val dog = _state.value.dog ?: return
+        scope.launch { repo.setLastMeal(lastMealAt); repo.setAboard(dog.id) }
+        if (mealNotice(lastMealAt, clock(), dog) == MealNotice.WARN) guide(context.getString(R.string.guide_meal_warn), GuidePriority.WARN)
+    }
+
     fun startTripNow() {
         val s = _state.value
         val dog = s.dog ?: return
@@ -281,9 +293,18 @@ class CareEngine(
         if (calm.playing.value) {
             calm.stop(); addEvent(EventType.CALM_OFF)
         } else {
-            calm.start(scope); addEvent(EventType.CALM_ON)
+            val s = _state.value
+            val name = s.dog?.name ?: ""
+            val lines = context.resources.getStringArray(R.array.calm_story).map { it.format(name) }
+            // The story needs a real voice; with Pleos TTS off or unavailable it would be a chime every few seconds.
+            val ttsUsable = s.data.settings.pleosTts && s.diagnostics.tts == SdkStatus.READY
+            val mode = if (s.data.settings.calmMode == CalmMode.STORY && !ttsUsable) CalmMode.MUSIC else s.data.settings.calmMode
+            calm.start(scope, mode, lines); addEvent(EventType.CALM_ON)
         }
     }
+
+    /** Restart playback when the mode changes while playing. */
+    fun restartCalmIfPlaying() { if (calm.playing.value) { calm.stop(); toggleCalm() } }
 
     fun setCalmVolume(v: Float) {
         calm.volume = v
@@ -298,7 +319,7 @@ class CareEngine(
     fun demoBreakDue() {
         val s = _state.value
         if (s.trip == null) startTripNow()
-        val interval = s.breakIntervalMin ?: s.dog?.let { breakIntervalMin(it, s.heatAlert) } ?: BREAK_ADULT_MIN
+        val interval = s.breakIntervalMin ?: s.dog?.let { breakIntervalMin(it, s.heatAlert, it.lifeStage()) } ?: BREAK_ADULT_MIN
         _state.update { it.copy(drivenSinceBreakSec = interval * 60) }
     }
     /** Demo: pretend the driver got out while the dog stayed (parked + 탑승 required). */
@@ -392,9 +413,11 @@ class CareEngine(
         val v = snap.value
         val moving = motion.update(v.gearPark, v.odometerKm, now)
         val dog = s.dog
+        val stage = dog?.lifeStage(now)
         val zoneTemp = demoTemp ?: v.zoneTemp
-        val band = dog?.let { comfortBand(it) }
+        val band = dog?.let { comfortBand(it, stage!!) }
         val heat = dog != null && isHeatAlert(dog, zoneTemp)
+        val meal = if (dog != null) mealNotice(s.data.lastMealAt, now, dog, stage!!) else MealNotice.NONE
         val plan = if (dog != null && band != null) climatePlan(dog, band, zoneTemp, v.hvacPower, v.fanSpeed, v.fanMax, moving) else null
 
         var trip = s.trip
@@ -431,7 +454,7 @@ class CareEngine(
             )
         }
 
-        val interval = dog?.let { breakIntervalMin(it, heat) }
+        val interval = dog?.let { breakIntervalMin(it, heat, stage!!) }
         val phase = if (trip != null && interval != null) breakPhase(drivenSinceBreak, interval) else BreakPhase.NONE
         if (phase != lastBreakPhase) {
             when (phase) {
@@ -532,7 +555,7 @@ class CareEngine(
                 vehicle = v.copy(zoneTemp = zoneTemp), moving = moving, band = band, climate = plan, heatAlert = heat,
                 trip = trip, breakIntervalMin = interval, drivenSinceBreakSec = drivenSinceBreak, breakPhase = phase,
                 restAreaSuggested = suggestRest, safety = flags, askTripEnd = askEnd, demoTemp = demoTemp,
-                petAlone = petAlone, petAloneSince = petAloneSince,
+                petAlone = petAlone, petAloneSince = petAloneSince, lifeStage = stage, mealNotice = meal,
             )
         }
     }

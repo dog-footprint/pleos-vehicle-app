@@ -17,6 +17,9 @@ import androidx.compose.ui.res.stringResource
 import com.dogfootprint.app.BuildConfig
 import com.dogfootprint.app.R
 import com.dogfootprint.app.care.CareState
+import com.dogfootprint.app.data.CalmMode
+import com.dogfootprint.app.ui.pleos.PleosToggleButton
+import androidx.compose.foundation.layout.Row
 import com.dogfootprint.app.pleos.SdkStatus
 import com.dogfootprint.app.ui.pleos.ButtonSize
 import com.dogfootprint.app.ui.pleos.Pleos
@@ -41,6 +44,16 @@ fun SettingsScreen(vm: CareViewModel, state: CareState) {
         }
         PleosListRow(stringResource(R.string.settings_tts), subtitle = stringResource(R.string.settings_tts_body), icon = R.drawable.ic_volume_up) {
             PleosSwitch(settings.pleosTts, { on -> vm.updateSettings { it.copy(pleosTts = on) } })
+        }
+        PleosListRow(stringResource(R.string.calm_mode), subtitle = stringResource(R.string.calm_evidence), icon = R.drawable.ic_graphic_eq, divider = false) {
+            Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+                CalmMode.entries.forEach { m ->
+                    PleosToggleButton(
+                        stringResource(if (m == CalmMode.MUSIC) R.string.calm_mode_music else R.string.calm_mode_story), on = settings.calmMode == m, size = ButtonSize.Small,
+                        onToggle = { vm.updateSettings { it.copy(calmMode = m) }; vm.restartCalmIfPlaying() },
+                    )
+                }
+            }
         }
 
         run {

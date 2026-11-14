@@ -63,13 +63,13 @@ start_segment 0
 scene intro "dog-footprint — 반려견 자리의 온도 한 숫자와 판정 한 단어. 견종·자리에 맞춰 온도·휴식·안전을 챙기고 드라이브를 발자국으로 남깁니다"
 sleep 7
 
-scene profile "프로필: 견종·나이·멀미 성향·타는 자리 → 적정 실내 온도와 휴식 간격이 자동으로 정해집니다"
+scene profile "프로필: 견종·생년월·체형·호흡기 질환·멀미·고정 방식 → 수의학 근거(docs/CARE_RULES.md)로 적정 온도·휴식 간격이 정해집니다"
 rail 프로필; sleep 4
 tap "새 반려견"; sleep 6
 rail 홈; sleep 2
 
-scene board "탑승 → 차량이 움직이면 여행이 자동 기록. 주행 중에는 한 화면 = 한 판단: 숫자 하나, 상태 하나, 버튼 두 개"
-tap "탑승"; sleep 1
+scene board "탑승 시 마지막 식사 시간을 물어봅니다 (식후 2시간 내 출발 → 멀미 주의). 차량이 움직이면 여행이 자동 기록"
+tap "탑승"; sleep 3; tap "1시간 전"; sleep 3
 $V gear Drive >/dev/null
 drive_loop >/dev/null 2>&1 & DRIVE_PID=$!
 trap 'kill $DRIVE_PID 2>/dev/null' EXIT
@@ -77,10 +77,10 @@ sleep 5
 $V hvac "power=1&ac=1&fan=5&driver_temp=27&passenger_temp=27" >/dev/null   # the emulator tends to drop HVAC power
 sleep 4
 
-scene climate "실내 온도 19.1°C — 시베리안 허스키 적정 20–22°C → 추위 안내 + Pleos TTS 음성 안내 (하네스 미착용도 감지)"
-sleep 8
+scene climate "(시뮬레이션) 실내 16°C — 시베리안 허스키 적정 18–22°C(근거: USDA 10°C 하한·NRC 열중성대) → 추위 안내 + Pleos TTS 음성 안내"
+rail 설정; sleep 1; tap "온도 16°C 가정"; sleep 1; rail 홈; sleep 8
 
-scene apply "자동 조절(실험 기능): Vehicle SDK로 뒷좌석 공조 설정을 21°C·바닥 송풍으로 변경"
+scene apply "자동 조절(실험 기능): Vehicle SDK로 뒷좌석 공조 설정을 19°C·바닥 송풍으로 변경"
 tap "자동 조절"; sleep 8
 
 scene hot "(시뮬레이션) 실내 27°C — 이중모 대형견에게 더움 → 냉방 권고 안내"
@@ -108,7 +108,7 @@ $V gear Park >/dev/null; sleep 2
 rail 설정; sleep 1; tap "운전자 하차"; sleep 1; rail 지금; sleep 10
 $V gear Drive >/dev/null; sleep 4
 
-scene calm "진정 사운드: 앱에서 합성한 저주파 노이즈 + 호흡 리듬으로 불안을 낮춥니다"
+scene calm "진정 모드: 켄넬 연구 근거의 잔잔한 클래식(CC0, 곡 순환) 또는 차량 음성이 읽어 주는 이야기. 저주파 노이즈는 근거가 없어 제외"
 tap "진정 사운드"; sleep 9
 tap "진정 사운드"; sleep 1
 

@@ -1,7 +1,7 @@
 package com.dogfootprint.app
 
 import android.app.Application
-import com.dogfootprint.app.audio.CalmingSoundPlayer
+import com.dogfootprint.app.audio.CalmingPlayer
 import com.dogfootprint.app.care.CareEngine
 import com.dogfootprint.app.data.AppRepository
 import com.dogfootprint.app.data.appDataStore
@@ -25,9 +25,10 @@ class App : Application() {
     val vehicle by lazy { VehicleSource(this) }
     val navi by lazy { NaviSource(this) }
     val location by lazy { LocationSource(this) }
-    val calm by lazy { CalmingSoundPlayer(this) }
     val pleosTts by lazy { PleosTtsVoiceGuide(this, BuildConfig.PLEOS_CLIENT_ID, BuildConfig.PLEOS_CLIENT_SECRET) }
     private val chime by lazy { ChimeVoiceGuide() }
+    private val voice by lazy { CompositeVoiceGuide(pleosTts, chime) { engine.state.value.data.settings.pleosTts } }
+    val calm by lazy { CalmingPlayer(this, voice) }
 
     val engine: CareEngine by lazy {
         CareEngine(
@@ -36,7 +37,7 @@ class App : Application() {
             vehicle = vehicle,
             navi = navi,
             location = location,
-            voice = CompositeVoiceGuide(pleosTts, chime) { engine.state.value.data.settings.pleosTts },
+            voice = voice,
             calm = calm,
             actuatorFor = { enabled -> if (enabled) PleosHvacActuator(vehicle) else GuidanceOnlyActuator },
             scope = scope,

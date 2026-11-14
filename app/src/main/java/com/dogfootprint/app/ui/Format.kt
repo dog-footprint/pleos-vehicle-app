@@ -4,13 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.dogfootprint.app.R
 import com.dogfootprint.app.care.BreedPresets
+import com.dogfootprint.app.care.HEAVY_DOG_KG
 import com.dogfootprint.app.care.SafetyFlag
 import com.dogfootprint.app.data.AgeGroup
+import com.dogfootprint.app.data.BodyCondition
 import com.dogfootprint.app.data.CoatType
+import com.dogfootprint.app.data.DogProfile
 import com.dogfootprint.app.data.DogSeat
 import com.dogfootprint.app.data.DogSize
 import com.dogfootprint.app.data.EventType
 import com.dogfootprint.app.data.Mood
+import com.dogfootprint.app.data.Restraint
 import com.dogfootprint.app.data.Tendency
 import com.dogfootprint.app.pleos.SdkStatus
 import java.text.DateFormat
@@ -40,12 +44,36 @@ fun dateText(epochMs: Long): String =
 
 fun timeText(epochMs: Long): String = DateFormat.getTimeInstance(DateFormat.SHORT, Locale.getDefault()).format(Date(epochMs))
 
+/** "성견 · 3년 2개월" — life stage plus age when the birth date is known. */
+@Composable
+fun lifeStageText(dog: DogProfile): String {
+    val stage = stringResource(dog.lifeStage().labelRes)
+    val months = dog.ageMonths() ?: return stage
+    return stringResource(R.string.life_stage_fmt, stage, stringResource(R.string.age_years_months_fmt, months / 12, months % 12))
+}
+
+/** Heat-sensitive traits the sources flag (docs/CARE_RULES.md §1), for the profile and Home lines. */
+@Composable
+fun heatRiskLabels(dog: DogProfile): List<String> = buildList {
+    if (dog.brachycephalic) add(stringResource(R.string.risk_brachy))
+    if (dog.respiratoryOrHeartIssue) add(stringResource(R.string.risk_resp))
+    if (dog.bodyCondition == BodyCondition.OVERWEIGHT) add(stringResource(R.string.risk_overweight))
+    if ((dog.weightKg ?: 0f) >= HEAVY_DOG_KG) add(stringResource(R.string.risk_heavy))
+    if (dog.coat == CoatType.DOUBLE || dog.coat == CoatType.LONG_SINGLE) add(stringResource(R.string.risk_thick_coat))
+    when (dog.lifeStage()) {
+        AgeGroup.PUPPY -> add(stringResource(R.string.risk_puppy))
+        AgeGroup.SENIOR -> add(stringResource(R.string.risk_senior))
+        AgeGroup.ADULT -> Unit
+    }
+}
+
 val DogSize.labelRes: Int
     get() = when (this) {
         DogSize.TOY -> R.string.size_toy
         DogSize.SMALL -> R.string.size_small
         DogSize.MEDIUM -> R.string.size_medium
         DogSize.LARGE -> R.string.size_large
+        DogSize.GIANT -> R.string.size_giant
     }
 
 val CoatType.labelRes: Int
@@ -68,6 +96,20 @@ val Tendency.labelRes: Int
         Tendency.NONE -> R.string.motion_none
         Tendency.MILD -> R.string.motion_mild
         Tendency.SEVERE -> R.string.motion_severe
+    }
+
+val BodyCondition.labelRes: Int
+    get() = when (this) {
+        BodyCondition.LEAN -> R.string.body_lean
+        BodyCondition.IDEAL -> R.string.body_ideal
+        BodyCondition.OVERWEIGHT -> R.string.body_overweight
+    }
+
+val Restraint.labelRes: Int
+    get() = when (this) {
+        Restraint.HARNESS -> R.string.restraint_harness
+        Restraint.CRATE -> R.string.restraint_crate
+        Restraint.NONE -> R.string.restraint_none
     }
 
 val DogSeat.labelRes: Int

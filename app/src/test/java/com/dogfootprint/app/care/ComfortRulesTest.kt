@@ -1,11 +1,13 @@
 package com.dogfootprint.app.care
 
 import com.dogfootprint.app.data.AgeGroup
+import com.dogfootprint.app.data.BodyCondition
 import com.dogfootprint.app.data.CoatType
 import com.dogfootprint.app.data.DogProfile
 import com.dogfootprint.app.data.DogSize
 import com.dogfootprint.app.data.EventType
 import com.dogfootprint.app.data.Tendency
+import java.util.Calendar
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -15,29 +17,53 @@ class ComfortRulesTest {
 
     private fun dog(
         size: DogSize = DogSize.MEDIUM, coat: CoatType = CoatType.SHORT, brachy: Boolean = false,
-        age: AgeGroup = AgeGroup.ADULT, motion: Tendency = Tendency.NONE,
-    ) = DogProfile(id = "d", name = "코코", breedKey = "other", size = size, coat = coat, brachycephalic = brachy, ageGroup = age, motionSickness = motion)
+        age: AgeGroup = AgeGroup.ADULT, motion: Tendency = Tendency.NONE, weight: Float? = null,
+        body: BodyCondition = BodyCondition.IDEAL, resp: Boolean = false,
+    ) = DogProfile(
+        id = "d", name = "코코", breedKey = "other", size = size, coat = coat, brachycephalic = brachy,
+        ageGroup = age, motionSickness = motion, weightKg = weight, bodyCondition = body, respiratoryOrHeartIssue = resp,
+    )
 
     @Test
-    fun `husky band is cooler than base`() {
+    fun `husky band caps at 22 (thick coat, large)`() {
         val band = comfortBand(dog(size = DogSize.LARGE, coat = CoatType.DOUBLE))
-        assertEquals(20f, band.lower); assertEquals(22f, band.upper)
+        assertEquals(18f, band.lower); assertEquals(22f, band.upper)
     }
 
     @Test
-    fun `chihuahua band shifts warmer`() {
+    fun `toy short-hair dog gets the 20 degree floor`() {
         val band = comfortBand(dog(size = DogSize.TOY, coat = CoatType.SHORT))
-        assertEquals(21f, band.lower); assertEquals(25f, band.upper)
+        assertEquals(20f, band.lower); assertEquals(24f, band.upper)
     }
 
     @Test
-    fun `brachycephalic senior keeps minimum width and heat alert`() {
+    fun `brachycephalic cap is 21 and senior shrinks both sides`() {
         val p = dog(size = DogSize.SMALL, coat = CoatType.SHORT, brachy = true, age = AgeGroup.SENIOR)
         val band = comfortBand(p)
+        assertEquals(20f, band.upper)   // 21 − 1 (senior)
         assertTrue(band.upper - band.lower >= BAND_MIN_WIDTH)
-        assertTrue(band.upper <= BRACHY_MAX_UPPER)
         assertTrue(isHeatAlert(p, 24f))
-        assertFalse(isHeatAlert(dog(), 30f))
+        assertFalse(isHeatAlert(dog(), 26f))
+        assertTrue(isHeatAlert(dog(), 27f))
+    }
+
+    @Test
+    fun `overweight and heavy dogs lose a degree each`() {
+        assertEquals(23f, comfortBand(dog(body = BodyCondition.OVERWEIGHT)).upper)
+        assertEquals(21f, comfortBand(dog(size = DogSize.GIANT, weight = 55f)).upper)   // 22 (large/giant) − 1 (≥ 50 kg)
+    }
+
+    @Test
+    fun `life stage from birth date follows AAHA size thresholds`() {
+        val now = Calendar.getInstance()
+        val y = now.get(Calendar.YEAR)
+        val m = now.get(Calendar.MONTH) + 1
+        assertEquals(AgeGroup.PUPPY, dog().copy(birthYear = y, birthMonth = m).lifeStage())
+        assertEquals(AgeGroup.ADULT, dog(size = DogSize.SMALL).copy(birthYear = y - 9, birthMonth = m).lifeStage())
+        assertEquals(AgeGroup.SENIOR, dog(size = DogSize.SMALL).copy(birthYear = y - 10, birthMonth = m).lifeStage())
+        assertEquals(AgeGroup.SENIOR, dog(size = DogSize.LARGE).copy(birthYear = y - 7, birthMonth = m).lifeStage())
+        assertEquals(AgeGroup.ADULT, dog(size = DogSize.LARGE).copy(birthYear = y - 6, birthMonth = m).lifeStage())
+        assertEquals(AgeGroup.SENIOR, dog(age = AgeGroup.SENIOR).lifeStage())   // no birth date → manual value
     }
 
     @Test
@@ -66,6 +92,17 @@ class ComfortRulesTest {
     }
 
     @Test
+    fun `meal notice warns within two hours, notices prone dogs within four`() {
+        val now = 10_000_000L
+        val h = 60 * 60_000L
+        assertEquals(MealNotice.WARN, mealNotice(now - 1 * h, now, dog()))
+        assertEquals(MealNotice.NONE, mealNotice(now - 3 * h, now, dog()))
+        assertEquals(MealNotice.NOTICE, mealNotice(now - 3 * h, now, dog(motion = Tendency.MILD)))
+        assertEquals(MealNotice.NOTICE, mealNotice(now - 3 * h, now, dog(age = AgeGroup.PUPPY)))
+        assertEquals(MealNotice.NONE, mealNotice(null, now, dog()))
+    }
+
+    @Test
     fun `rest area suggestion needs progress and distance`() {
         assertTrue(suggestRestArea(restAreaAheadKm = 5.0, drivenSinceBreakSec = 80 * 60, intervalMin = 120, destinationRemainSec = null))
         assertFalse(suggestRestArea(5.0, 30 * 60, 120, null))
@@ -81,7 +118,7 @@ class ComfortRulesTest {
         repeat(4) { fired += if (d.onPedal(true, t, true)) 1 else 0; d.onPedal(false, t + 500, true); t += 2_000 }
         assertEquals(1, fired)
         repeat(4) { fired += if (d.onPedal(true, t, true)) 1 else 0; d.onPedal(false, t + 500, true); t += 2_000 }
-        assertEquals(1, fired) // within cooldown
+        assertEquals(1, fired)
         t += BRAKE_BURST_COOLDOWN_MS
         repeat(4) { fired += if (d.onPedal(true, t, true)) 1 else 0; d.onPedal(false, t + 500, true); t += 2_000 }
         assertEquals(2, fired)
@@ -97,7 +134,6 @@ class ComfortRulesTest {
         assertTrue(m.update(gearPark = false, odometerKm = 100.1f, nowMs = 30_000))
         assertFalse(m.update(gearPark = false, odometerKm = 100.1f, nowMs = 70_000))
         assertFalse(m.update(gearPark = true, odometerKm = 100.2f, nowMs = 71_000))
-        // An odometer that goes backwards (emulator reset) is a new baseline, not movement.
         assertFalse(m.update(gearPark = false, odometerKm = 50f, nowMs = 72_000))
         assertTrue(m.update(gearPark = false, odometerKm = 50.2f, nowMs = 73_000))
     }

@@ -5,7 +5,7 @@
 > sound, and an automatic trip log ("footprints") — built for the
 > [현대자동차그룹 차량용 앱 개발 공모전](https://appdevchallenge.auto-hmg.io/).
 
-Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md).
+Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md). Evidence behind every care threshold: [docs/CARE_RULES.md](docs/CARE_RULES.md).
 
 ## APK
 
@@ -37,13 +37,14 @@ Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md).
 
 | Feature | How | Pleos SDK |
 |---|---|---|
-| Dog profile → comfort band + break interval | breed presets (size, coat, flat-faced), age, motion sickness, usual seat | — |
+| Dog profile → comfort band + break interval | breed presets (size, coat, flat-faced), birth date → AAHA life stage, weight & body condition, respiratory/heart issue, motion sickness, restraint, usual seat — thresholds sourced in [docs/CARE_RULES.md](docs/CARE_RULES.md) | — |
+| Last-meal check at boarding | "when did the dog last eat?" popup; warns if under 2 h (motion sickness) | — |
 | Cabin temperature at the dog's seat vs. its band, recommendation text | HVAC current/target temperature, fan, power | Vehicle (CAR_CLIMATE) |
 | Auto-adjust climate (experimental, Settings toggle) | HVAC set-point / fan / direction, seat heater, window close when parked | Vehicle Control (not yet approved in Pleos Playground; works on the emulator) |
 | Break reminders (pre-alert + due), rest-area suggestion | odometer-based driving time; NaviHelper destination + TBT rest area | Vehicle (CAR_DRIVE), NaviHelper |
 | Safety checks: window open, harness unbuckled, door open, sport mode, hard-brake bursts | seat occupancy/belt, window & door position, drive mode, brake pedal | Vehicle |
 | Spoken guidance (Korean) with chime fallback | Pleos TTS, registered with the team's Client ID/Secret | TextToSpeech |
-| Calming sound | synthesized brown noise with a slow breathing envelope | — |
+| Calming mode | CC0 calm classical (Open Goldberg Variations, three pieces rotated) or a TTS-read story; brown noise dropped for lack of canine evidence | TextToSpeech (story) |
 | Footprints: per-trip distance, time, breaks, events, comfort score, mood | local DataStore | FusedLocation for coordinates |
 
 ---
@@ -144,7 +145,7 @@ app/src/main/java/com/dogfootprint/app/
 ├── data/                  AppData / DogProfile / Trip models, DataStore repository
 ├── care/                  BreedPresets, Zones, ComfortRules (pure, unit-tested), CareEngine (trip + guidance brain)
 ├── pleos/                 VehicleSource, NaviSource, LocationSource, VoiceGuide (Pleos TTS + chime), ClimateActuator
-├── audio/                 CalmingSoundPlayer
+├── audio/                 CalmingPlayer (CC0 music rotation / TTS story)
 └── ui/                    NavigationRail + Home / Footprints / Profile / Settings screens
 ```
 

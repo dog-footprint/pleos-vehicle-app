@@ -24,6 +24,8 @@ import com.dogfootprint.app.R
 import com.dogfootprint.app.care.BreakPhase
 import com.dogfootprint.app.care.CareState
 import com.dogfootprint.app.care.ClimateVerdict
+import com.dogfootprint.app.care.MealNotice
+import com.dogfootprint.app.data.Restraint
 import com.dogfootprint.app.data.EventType
 import com.dogfootprint.app.pleos.ApplyResult
 import com.dogfootprint.app.ui.pleos.ButtonSize
@@ -83,14 +85,17 @@ fun HomeScreen(vm: CareViewModel, state: CareState, onCreateProfile: () -> Unit)
 private fun DogLine(vm: CareViewModel, state: CareState, driving: Boolean) {
     val c = Pleos.colors
     val dog = state.dog ?: return
-    val facts = listOfNotNull(breedName(dog.breedKey), dog.weightKg?.let { stringResource(R.string.weight_fmt, it) }, stringResource(dog.seat.labelRes))
+    val facts = listOfNotNull(breedName(dog.breedKey), lifeStageText(dog), dog.weightKg?.let { stringResource(R.string.weight_fmt, it) }, stringResource(dog.seat.labelRes))
+    val risks = heatRiskLabels(dog)
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(dog.name, style = PleosType.titleLarge, color = c.textPrimary)
             Text(facts.joinToString(" · "), style = PleosType.bodyMedium, color = c.textTertiary)
+            if (risks.isNotEmpty() && !driving) Text(stringResource(R.string.profile_heat_risk, risks.joinToString(", ")), style = PleosType.bodyMedium, color = c.textTertiary)
         }
         PleosToggleButton(
-            stringResource(R.string.home_aboard), on = state.aboard, onToggle = vm::setAboard,
+            stringResource(R.string.home_aboard), on = state.aboard,
+            onToggle = { on -> if (on && !driving) showMealDialog.value = true else vm.setAboard(on) },
             size = if (driving) ButtonSize.Small else ButtonSize.Medium, icon = R.drawable.ic_pets,
         )
     }
@@ -221,7 +226,17 @@ private fun StatusRows(vm: CareViewModel, state: CareState, driving: Boolean) {
 @Composable
 private fun SafetyRows(state: CareState) {
     val c = Pleos.colors
+    val dog = state.dog
     Column(verticalArrangement = Arrangement.spacedBy(PleosDims.space16)) {
+        val mealAgo = state.data.lastMealAt?.let { ((System.currentTimeMillis() - it) / 60_000).toInt() }
+        when (state.mealNotice) {
+            MealNotice.WARN -> PleosStatusLine(R.drawable.ic_schedule, stringResource(R.string.meal_warn_fmt, mealAgo ?: 0), tint = c.negative, style = PleosType.bodyLargeStrong)
+            MealNotice.NOTICE -> PleosStatusLine(R.drawable.ic_schedule, stringResource(R.string.meal_notice_fmt, durationText((mealAgo ?: 0) * 60)), tint = c.textSecondary)
+            MealNotice.NONE -> Unit
+        }
+        if (dog?.restraint == Restraint.NONE && state.aboard) {
+            PleosStatusLine(R.drawable.ic_airline_seat_recline_normal, stringResource(R.string.restraint_none_hint), tint = c.negative)
+        }
         if (state.safety.isEmpty()) {
             PleosStatusLine(R.drawable.ic_health_and_safety, stringResource(R.string.safety_all_ok), tint = c.textSecondary)
         } else {

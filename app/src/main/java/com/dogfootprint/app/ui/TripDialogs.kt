@@ -2,6 +2,8 @@ package com.dogfootprint.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,10 +30,40 @@ import com.dogfootprint.app.ui.pleos.PleosType
 /** Shared so the Home "end trip" button and the parked-too-long prompt open the same mood popup. */
 val showMoodDialog = mutableStateOf(false)
 
+/** Opened by the 탑승 toggle while parked: records the last meal time (motion-sickness rule). */
+val showMealDialog = mutableStateOf(false)
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TripDialogs(vm: CareViewModel, state: CareState) {
     val c = Pleos.colors
     val dog = state.dog ?: return
+
+    if (showMealDialog.value) {
+        val hour = 60 * 60_000L
+        val options = listOf(
+            R.string.meal_just_now to 0L, R.string.meal_1h to 1 * hour, R.string.meal_2h to 2 * hour,
+            R.string.meal_3h to 4 * hour, R.string.meal_unknown to -1L,
+        )
+        PleosPopup(
+            title = stringResource(R.string.meal_title, dog.name),
+            onDismiss = { showMealDialog.value = false; vm.board(null) },
+            body = {
+                Column {
+                    Text(stringResource(R.string.meal_body), style = PleosType.bodyLarge, color = c.textSecondary)
+                    FlowRow(Modifier.padding(top = PleosDims.space24), horizontalArrangement = Arrangement.spacedBy(PleosDims.space16), verticalArrangement = Arrangement.spacedBy(PleosDims.space16)) {
+                        options.forEach { (label, ago) ->
+                            PleosToggleButton(stringResource(label), on = false, size = ButtonSize.Large, onToggle = {
+                                showMealDialog.value = false
+                                vm.board(if (ago < 0) null else System.currentTimeMillis() - ago)
+                            })
+                        }
+                    }
+                }
+            },
+            actions = {},
+        )
+    }
 
     if (state.askTripEnd && state.trip != null && !showMoodDialog.value) {
         PleosPopup(

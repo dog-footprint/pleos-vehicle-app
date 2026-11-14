@@ -30,6 +30,8 @@ import com.dogfootprint.app.care.CareState
 import com.dogfootprint.app.care.breakIntervalMin
 import com.dogfootprint.app.care.comfortBand
 import com.dogfootprint.app.data.AgeGroup
+import com.dogfootprint.app.data.BodyCondition
+import com.dogfootprint.app.data.Restraint
 import com.dogfootprint.app.data.CoatType
 import com.dogfootprint.app.data.DogProfile
 import com.dogfootprint.app.data.DogSeat
@@ -68,7 +70,7 @@ fun ProfileScreen(vm: CareViewModel, state: CareState) {
                     val selected = dog.id == state.dog?.id
                     PleosListRow(
                         title = dog.name,
-                        subtitle = listOf(breedName(dog.breedKey), stringResource(dog.size.labelRes), stringResource(dog.coat.labelRes), stringResource(dog.seat.labelRes)).joinToString(" · "),
+                        subtitle = listOf(breedName(dog.breedKey), lifeStageText(dog), stringResource(dog.size.labelRes), stringResource(dog.coat.labelRes), stringResource(dog.seat.labelRes)).joinToString(" · "),
                         icon = R.drawable.ic_pets, iconTint = if (selected) c.accent else c.textPrimary,
                         onClick = if (state.moving) null else { { editing = dog } },
                     ) {
@@ -119,7 +121,24 @@ private fun DogEditor(dog: DogProfile, onChange: (DogProfile) -> Unit, onSave: (
                 Text(stringResource(R.string.profile_brachy), style = PleosType.bodyLarge, color = c.textPrimary, modifier = Modifier.weight(1f))
                 PleosSwitch(dog.brachycephalic, { onChange(dog.copy(brachycephalic = it)) })
             }
-            OptionRow(stringResource(R.string.profile_age), AgeGroup.entries, dog.ageGroup, { stringResource(it.labelRes) }) { onChange(dog.copy(ageGroup = it)) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+                Text(stringResource(R.string.profile_birth), style = PleosType.bodyLarge, color = c.textPrimary, modifier = Modifier.width(120.dp))
+                OutlinedTextField(
+                    value = dog.birthYear?.toString() ?: "", onValueChange = { onChange(dog.copy(birthYear = it.filter(Char::isDigit).take(4).toIntOrNull())) }, singleLine = true,
+                    textStyle = PleosType.bodyLarge, label = { Text(stringResource(R.string.profile_birth_year), style = PleosType.labelMedium) }, modifier = Modifier.width(200.dp),
+                )
+                OutlinedTextField(
+                    value = dog.birthMonth?.toString() ?: "", onValueChange = { onChange(dog.copy(birthMonth = it.filter(Char::isDigit).take(2).toIntOrNull()?.coerceIn(1, 12))) }, singleLine = true,
+                    textStyle = PleosType.bodyLarge, label = { Text(stringResource(R.string.profile_birth_month), style = PleosType.labelMedium) }, modifier = Modifier.width(140.dp),
+                )
+                Text(lifeStageText(dog), style = PleosType.bodyMedium, color = c.textTertiary)
+            }
+            if (dog.birthYear == null) OptionRow(stringResource(R.string.profile_age), AgeGroup.entries, dog.ageGroup, { stringResource(it.labelRes) }) { onChange(dog.copy(ageGroup = it)) }
+            OptionRow(stringResource(R.string.profile_body), BodyCondition.entries, dog.bodyCondition, { stringResource(it.labelRes) }) { onChange(dog.copy(bodyCondition = it)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.profile_resp), style = PleosType.bodyLarge, color = c.textPrimary, modifier = Modifier.weight(1f))
+                PleosSwitch(dog.respiratoryOrHeartIssue, { onChange(dog.copy(respiratoryOrHeartIssue = it)) })
+            }
             OptionRow(stringResource(R.string.profile_motion), Tendency.entries, dog.motionSickness, { stringResource(it.labelRes) }) { onChange(dog.copy(motionSickness = it)) }
             OutlinedTextField(
                 value = dog.weightKg?.toString() ?: "", onValueChange = { onChange(dog.copy(weightKg = it.toFloatOrNull())) }, singleLine = true,
@@ -127,6 +146,14 @@ private fun DogEditor(dog: DogProfile, onChange: (DogProfile) -> Unit, onSave: (
             )
         }
         Section(stringResource(R.string.profile_seat)) { SeatPicker(dog.seat) { onChange(dog.copy(seat = it)) } }
+        Section(stringResource(R.string.profile_restraint)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+                Restraint.entries.forEach { r -> PleosToggleButton(stringResource(r.labelRes), on = dog.restraint == r, size = ButtonSize.Small, onToggle = { onChange(dog.copy(restraint = r)) }) }
+            }
+            if (dog.restraint == Restraint.NONE) Text(stringResource(R.string.restraint_none_hint), style = PleosType.bodyMedium, color = c.negative)
+        }
+        val risks = heatRiskLabels(dog)
+        if (risks.isNotEmpty()) Text(stringResource(R.string.profile_heat_risk, risks.joinToString(", ")), style = PleosType.bodyMedium, color = c.textTertiary)
         val band = comfortBand(dog)
         PleosStatusLine(R.drawable.ic_thermostat, stringResource(R.string.profile_band_preview, band.lower, band.upper, breakIntervalMin(dog, false)), tint = c.textSecondary)
         Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space16)) {

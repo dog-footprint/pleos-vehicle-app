@@ -21,6 +21,8 @@ class CareViewModel(private val app: App) : ViewModel() {
     val engine: CareEngine get() = app.engine
 
     fun setAboard(on: Boolean) = engine.setAboard(on)
+    fun board(lastMealAt: Long?) = engine.board(lastMealAt)
+    fun restartCalmIfPlaying() = engine.restartCalmIfPlaying()
     fun startTrip() = engine.startTripNow()
     fun endTrip(mood: Mood?, note: String?) = engine.endTrip(mood, note)
     fun markBreakTaken() = engine.markBreakTaken()

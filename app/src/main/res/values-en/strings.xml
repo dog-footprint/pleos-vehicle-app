@@ -67,7 +67,6 @@
     <string name="safety_not_on_seat">Not on seat</string>
     <string name="tile_score_title">Comfort score</string>
     <string name="tile_calm_title">Calming sound</string>
-    <string name="tile_calm_body">Low-frequency noise to ease anxiety</string>
     <string name="tile_trip_title">Current trip</string>
     <string name="tile_trip_none">No trip</string>
     <string name="tile_trip_start">Start trip</string>
@@ -202,4 +201,56 @@
     <string name="demo_pet_alone">Driver leaves (pet alone)</string>
     <string name="settings_developer">Developer</string>
     <string name="voice_hint">Voice: "Gleo, tell me when Coco needs a break" (Gleo AI integration planned)</string>
+    <!-- Evidence-based profile & care (docs/CARE_RULES.md) -->
+    <string name="profile_birth">Date of birth</string>
+    <string name="profile_birth_year">Birth year</string>
+    <string name="profile_birth_month">Month</string>
+    <string name="profile_body">Body condition</string>
+    <string name="body_lean">Lean</string>
+    <string name="body_ideal">Ideal</string>
+    <string name="body_overweight">Overweight</string>
+    <string name="profile_resp">Respiratory or heart condition</string>
+    <string name="profile_restraint">Restraint in the car</string>
+    <string name="restraint_harness">Harness / seat belt</string>
+    <string name="restraint_crate">Crate / carrier</string>
+    <string name="restraint_none">None</string>
+    <string name="restraint_none_hint">Holding a dog while driving breaks Road Traffic Act §39. A harness or crate is recommended.</string>
+    <string name="size_giant">Giant</string>
+    <string name="life_stage_fmt">%1$s · %2$s</string>
+    <string name="age_years_months_fmt">%1$dy %2$dm</string>
+    <string name="profile_heat_risk">Heat-sensitive traits: %1$s</string>
+    <string name="risk_brachy">flat-faced</string>
+    <string name="risk_resp">respiratory/heart</string>
+    <string name="risk_overweight">overweight</string>
+    <string name="risk_heavy">50 kg+</string>
+    <string name="risk_puppy">puppy</string>
+    <string name="risk_senior">senior</string>
+    <string name="risk_thick_coat">thick coat</string>
+    <string name="meal_title">When did %1$s last eat?</string>
+    <string name="meal_body">Leaving within 2 h of a meal raises motion sickness. A light meal 3–4 h before departure is best.</string>
+    <string name="meal_just_now">Just now</string>
+    <string name="meal_1h">1 hour ago</string>
+    <string name="meal_2h">2 hours ago</string>
+    <string name="meal_3h">3+ hours ago</string>
+    <string name="meal_unknown">Not sure</string>
+    <string name="meal_warn_fmt">%1$d min since the meal — motion-sickness risk, no food in the car</string>
+    <string name="meal_notice_fmt">%1$s since the meal — prone to motion sickness, crack a window and drive gently</string>
+    <string name="guide_meal_warn">A meal not long ago. Motion sickness is likely, so start gently.</string>
+    <string name="calm_mode">Calm mode</string>
+    <string name="calm_mode_music">Calm music</string>
+    <string name="calm_mode_music_body">Bach Goldberg Variations (CC0), low volume, rotated</string>
+    <string name="calm_mode_story">Listen to a story</string>
+    <string name="calm_mode_story_body">The vehicle\'s voice reads a calm narration</string>
+    <string name="calm_evidence">Based on kennel studies: calm music and audiobooks increase resting and reduce barking (modest effect; habituation within 7 days of the same music). Low-frequency noise has no evidence and was removed.</string>
+    <string name="tile_calm_body">Calm music or a story to ease tension</string>
+    <string-array name="calm_story">
+        <item>%1$s, today we take it slow.</item>
+        <item>Trees pass by the window one by one. A light breeze.</item>
+        <item>A small stream runs beside the road, water rolling over the stones.</item>
+        <item>On a far hill there is a house, smoke rising slowly from the chimney.</item>
+        <item>The sun warms your back, and your eyes are half closed.</item>
+        <item>We are not in a hurry. At the next stop we will drink some water and walk a little.</item>
+        <item>The road bends gently, and the car follows quietly.</item>
+        <item>You are doing well. Just a little further.</item>
+    </string-array>
 </resources>

@@ -34,6 +34,8 @@ Contest rules, deadlines, SDK coordinates and permissions are in `docs/CONTEST.m
 - SDK callback values are platform-nullable; nulls are dropped in `vehicleFlow`. Missing permissions throw `SecurityException` synchronously (handled by `registerOrFail`).
 - HVAC/seat areas must come from the capability APIs (`hvacCurrentTempAreas()`, `hvacTempBounds()`, `hvacFanSpeedBounds()`, `hvacPowerAreas()`); `CareEngine.watchZone` picks the area containing the dog's seat, else a front-seat fallback (`zoneTempFallback`).
 - Care rules live in `care/ComfortRules.kt` as pure functions with constants at the top; change thresholds there and keep `ComfortRulesTest` green. `CareEngine` only orchestrates (1 s tick, trip life-cycle, events, guidance).
+- Every constant in `ComfortRules.kt` traces to a cited source in `docs/CARE_RULES.md`. Do not add or move a threshold without adding the evidence there first; if no source exists, say so in the doc rather than guessing.
+- Life stage comes from `DogProfile.lifeStage()` (birth date + size, AAHA thresholds), not from `ageGroup` directly; pass the stage into rule functions.
 - Seams for not-yet-approved SDK features: `ClimateActuator` (`GuidanceOnlyActuator` default, `PleosHvacActuator` behind `Settings.controlEnabled`), `VoiceGuide` (`CompositeVoiceGuide` = Pleos TTS → chime).
 - UI text goes through string resources (`values/` Korean, `values-en/` English); enums map to labels in `ui/Format.kt`.
 - `pleos.car.permission.FUSED_LOCATION` is a runtime (dangerous) permission; the others are install-time. Declare only what the app uses; `CONTROL_CAR_*` must be dropped before an App Market submission unless approved.
