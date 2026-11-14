@@ -1,4 +1,4 @@
-# APPNAME
+# dog-footprint
 
 > One-line description of the app. (TODO)
 
@@ -8,7 +8,7 @@ Contest rules, SDK list and deadlines are summarized in [docs/CONTEST.md](docs/C
 
 ## APK
 
-- Location: [`apk/TEAMNAME_APPNAME_release.apk`](apk/) (or the GitHub Release link: TODO)
+- Location: [`apk/dog-footprint_dog-footprint_release.apk`](apk/) (or the GitHub Release link: TODO)
 - Build: release build, signed, minSdk 28 / targetSdk 35
 
 ## How to run
@@ -16,9 +16,9 @@ Contest rules, SDK list and deadlines are summarized in [docs/CONTEST.md](docs/C
 1. Start a **Pleos Connect v2.1.0** AVD (see *One-time setup* below), for example `emulator -avd Pleos_Connect`.
 2. Install the APK:
    ```bash
-   adb install -r apk/TEAMNAME_APPNAME_release.apk
+   adb install -r apk/dog-footprint_dog-footprint_release.apk
    ```
-3. Open **APPNAME** from the launcher. Allow the location permission prompt on first launch.
+3. Open **dog-footprint** from the launcher. Allow the location permission prompt on first launch.
 4. To simulate vehicle signals (speed, battery, doors, …), use the emulator's
    *Extended controls → Car data* panel or the Pleos vehicle emulator
    ([guide](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/use-vehicle-emulator)).
