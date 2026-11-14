@@ -48,6 +48,8 @@ android {
                 storePassword = keystoreProps.getProperty("storePassword")
                 keyAlias = keystoreProps.getProperty("keyAlias")
                 keyPassword = keystoreProps.getProperty("keyPassword")
+                // Pleos relies on v3 signing (key rotation / lineage); that's why minSdk is 28.
+                enableV3Signing = true
             }
         }
     }

@@ -9,7 +9,9 @@ STORE=release.jks
 ALIAS=${1:-release}
 [[ -e $STORE ]] && { echo "$STORE already exists, aborting."; exit 1; }
 
-read -rsp "Keystore password (min 6 chars): " PASS; echo
+# Non-interactive: KEYSTORE_PASSWORD=... scripts/create-release-keystore.sh
+PASS=${KEYSTORE_PASSWORD:-}
+if [[ -z $PASS ]]; then read -rsp "Keystore password (min 6 chars): " PASS; echo; fi
 keytool -genkeypair -v -keystore "$STORE" -alias "$ALIAS" \
   -keyalg RSA -keysize 2048 -validity 10000 \
   -storepass "$PASS" -keypass "$PASS" \
