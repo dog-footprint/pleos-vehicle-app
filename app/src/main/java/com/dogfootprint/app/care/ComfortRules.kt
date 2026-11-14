@@ -198,9 +198,10 @@ class MotionDetector {
     fun update(gearPark: Boolean?, odometerKm: Float?, nowMs: Long): Boolean {
         if (odometerKm != null) {
             val prev = lastKm
-            if (prev == null || odometerKm > prev) {
-                if (prev != null) lastChangeAt = nowMs
-                lastKm = odometerKm
+            when {
+                prev == null -> lastKm = odometerKm
+                odometerKm < prev -> { lastKm = odometerKm; lastChangeAt = null }   // reset (emulator): new baseline, no movement
+                odometerKm > prev -> { lastChangeAt = nowMs; lastKm = odometerKm }
             }
         }
         val recentlyMoved = lastChangeAt?.let { nowMs - it <= MOTION_PARKED_AFTER_MS } ?: false

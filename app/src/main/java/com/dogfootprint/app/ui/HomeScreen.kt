@@ -1,6 +1,7 @@
 package com.dogfootprint.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,7 +88,11 @@ private fun DogHeader(vm: CareViewModel, state: CareState) {
                     )
                     state.vehicle.soc?.let { Text(" · " + stringResource(R.string.soc_fmt, it), style = MaterialTheme.typography.bodyMedium) }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
+                // Whole row toggles: a bigger target for a moving car (and for scripted demos).
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 8.dp).clickable { vm.setAboard(!state.aboard) },
+                ) {
                     Text(stringResource(if (state.aboard) R.string.home_aboard else R.string.home_not_aboard), style = MaterialTheme.typography.titleMedium)
                     Switch(checked = state.aboard, onCheckedChange = vm::setAboard, modifier = Modifier.padding(start = 12.dp))
                 }
@@ -251,7 +256,7 @@ private fun ScoreTile(state: CareState) {
 @Composable
 private fun CalmTile(vm: CareViewModel, state: CareState) {
     Tile(stringResource(R.string.tile_calm_title), if (state.calmOn) StatusColors.good else Color.Gray) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { vm.toggleCalm() }) {
             Text(stringResource(R.string.tile_calm_body), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             Switch(checked = state.calmOn, onCheckedChange = { vm.toggleCalm() })
         }

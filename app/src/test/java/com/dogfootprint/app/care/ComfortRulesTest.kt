@@ -97,6 +97,9 @@ class ComfortRulesTest {
         assertTrue(m.update(gearPark = false, odometerKm = 100.1f, nowMs = 30_000))
         assertFalse(m.update(gearPark = false, odometerKm = 100.1f, nowMs = 70_000))
         assertFalse(m.update(gearPark = true, odometerKm = 100.2f, nowMs = 71_000))
+        // An odometer that goes backwards (emulator reset) is a new baseline, not movement.
+        assertFalse(m.update(gearPark = false, odometerKm = 50f, nowMs = 72_000))
+        assertTrue(m.update(gearPark = false, odometerKm = 50.2f, nowMs = 73_000))
     }
 
     @Test

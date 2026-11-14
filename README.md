@@ -93,6 +93,19 @@ scripts/tap-text.sh "여행 종료"                  # taps any on-screen text (
 
 Settings → 데모 트리거 reproduces the same situations without the console.
 
+### Demo video
+
+[`docs/demo/dog-footprint-demo.mp4`](docs/demo/dog-footprint-demo.mp4) (3 min, 1080p, with the emulator's audio — the
+Pleos TTS voice and the calming sound are real). It is produced entirely by scripts, so it can be re-recorded after any
+change:
+
+```bash
+scripts/record-demo.sh build/demo        # cold-starts the app, seeds 코코, drives the scenario, records 2 segments + scenes.json
+scripts/make-demo-video.sh build/demo docs/demo/dog-footprint-demo.mp4   # concat, Korean caption overlays, loudness-normalised audio
+```
+
+The emulator's recorder stops at 180 s per file, hence the two segments. Captions live in `record-demo.sh` next to each scene.
+
 ### Emulator facts worth knowing (verified on Pleos Connect v2.1.0)
 
 - Apps run as **user 10** on AAOS: `run-as`/`pm grant` need `--user 10` (`run-as --user` is unsupported here, hence

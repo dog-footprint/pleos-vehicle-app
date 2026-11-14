@@ -234,7 +234,7 @@ class CareEngine(
             endLat = snap.value.lat ?: trip.endLat, endLon = snap.value.lon ?: trip.endLon,
         )
         clearTripState()
-        _state.update { it.copy(trip = null, askTripEnd = false, drivenSinceBreakSec = 0, breakPhase = BreakPhase.NONE) }
+        _state.update { it.copy(trip = null, askTripEnd = false, drivenSinceBreakSec = 0, breakPhase = BreakPhase.NONE, lastApply = null, banner = null) }
         scope.launch { repo.upsertTrip(done); repo.setAboard(null) }
     }
 
@@ -291,7 +291,12 @@ class CareEngine(
         val interval = s.breakIntervalMin ?: s.dog?.let { breakIntervalMin(it, s.heatAlert) } ?: BREAK_ADULT_MIN
         _state.update { it.copy(drivenSinceBreakSec = interval * 60) }
     }
-    fun setDemoTemp(t: Float?) { demoTemp = t }
+    fun setDemoTemp(t: Float?) {
+        demoTemp = t
+        // Skip the out-of-band grace/cooldown so the guidance fires on the next tick.
+        outOfBandSince = if (t != null) clock() - TEMP_OUT_OF_BAND_GRACE_MS else null
+        lastTempEventAt = null
+    }
 
     // ---- internals -------------------------------------------------------------------------------
 
