@@ -16,9 +16,19 @@ data class ZoneAreas(val current: SeatArea, val target: SeatArea, val fan: SeatA
     }
 }
 
+/** One thing the actuator changed, typed so the UI can word it for the driver (ui/Format.changeText). */
+sealed interface Change {
+    data class Temperature(val celsius: Float) : Change
+    data class FanSpeed(val level: Int) : Change
+    data class Direction(val direction: AirDirection) : Change
+    data object Power : Change
+    data class Window(val name: String) : Change
+}
+
 sealed interface ApplyResult {
-    data class Applied(val changes: List<String>) : ApplyResult
-    data class Partial(val changes: List<String>, val errors: List<String>) : ApplyResult
+    data class Applied(val changes: List<Change>) : ApplyResult
+    /** `errors` are SDK messages for logs and the debug diagnostics, not for the driver. */
+    data class Partial(val changes: List<Change>, val errors: List<String>) : ApplyResult
     data class NotApplied(val reason: Reason) : ApplyResult
 
     enum class Reason { CONTROL_NOT_ENABLED, NOTHING_TO_DO, SDK_ERROR }
@@ -40,19 +50,19 @@ class PleosHvacActuator(private val vehicle: VehicleSource) : ClimateActuator {
 
     override suspend fun apply(plan: ClimatePlan, zone: DogZone, areas: ZoneAreas, moving: Boolean, closeWindow: Boolean): ApplyResult {
         if (!plan.needsAction && !closeWindow) return ApplyResult.NotApplied(ApplyResult.Reason.NOTHING_TO_DO)
-        val changes = mutableListOf<String>()
+        val changes = mutableListOf<Change>()
         val errors = mutableListOf<String>()
 
-        suspend fun <T> step(label: String, call: suspend () -> Result<T>) {
-            call().onSuccess { changes += "$label → $it" }.onFailure { errors += "$label: ${it.message ?: it::class.simpleName}" }
+        suspend fun <T> step(change: Change, call: suspend () -> Result<T>) {
+            call().onSuccess { changes += change }.onFailure { errors += "${change::class.simpleName}: ${it.message ?: it::class.simpleName}" }
         }
 
-        if (plan.verdict == ClimateVerdict.HVAC_OFF) step("HVAC power") { vehicle.setHvacPower(areas.power, true) }
-        plan.targetTemp?.let { t -> step("temperature") { vehicle.setHvacTemperature(areas.target, t) } }
-        plan.fanSpeed?.let { f -> step("fan speed") { vehicle.setHvacFanSpeed(areas.fan, f) } }
-        plan.direction?.let { d -> step("fan direction") { vehicle.setHvacFanDirection(areas.fan, d.toSdk()) } }
+        if (plan.verdict == ClimateVerdict.HVAC_OFF) step(Change.Power) { vehicle.setHvacPower(areas.power, true) }
+        plan.targetTemp?.let { t -> step(Change.Temperature(t)) { vehicle.setHvacTemperature(areas.target, t) } }
+        plan.fanSpeed?.let { f -> step(Change.FanSpeed(f)) { vehicle.setHvacFanSpeed(areas.fan, f) } }
+        plan.direction?.let { d -> step(Change.Direction(d)) { vehicle.setHvacFanDirection(areas.fan, d.toSdk()) } }
         if (closeWindow && !moving) {
-            zone.windows.forEach { w -> step("window ${w.name}") { vehicle.setWindowPosition(WindowArea(w), 0) } }
+            zone.windows.forEach { w -> step(Change.Window(w.name)) { vehicle.setWindowPosition(WindowArea(w), 0) } }
         }
 
         return when {

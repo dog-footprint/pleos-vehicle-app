@@ -3,6 +3,13 @@ package com.dogfootprint.app.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.dogfootprint.app.R
+import com.dogfootprint.app.care.AirDirection
+import com.dogfootprint.app.care.Alert
+import com.dogfootprint.app.care.AlertKind
+import com.dogfootprint.app.care.CareState
+import com.dogfootprint.app.care.ClimateAction
+import com.dogfootprint.app.care.alertMessageRes
+import com.dogfootprint.app.care.wholeMinutes
 import com.dogfootprint.app.care.BreedPresets
 import com.dogfootprint.app.care.HEAVY_DOG_KG
 import com.dogfootprint.app.care.SafetyFlag
@@ -16,14 +23,17 @@ import com.dogfootprint.app.data.EventType
 import com.dogfootprint.app.data.Mood
 import com.dogfootprint.app.data.Restraint
 import com.dogfootprint.app.data.Tendency
+import com.dogfootprint.app.pleos.Change
 import com.dogfootprint.app.pleos.SdkStatus
 import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
 fun isKorean(): Boolean = Locale.getDefault().language == "ko"
 
-fun breedName(key: String): String = BreedPresets.byKey(key).let { if (isKorean()) it.nameKo else it.nameEn }
+fun breedName(key: String): String = if (key.isBlank()) "—" else BreedPresets.byKey(key).let { if (isKorean()) it.nameKo else it.nameEn }
 
 @Composable
 fun durationText(sec: Int): String {
@@ -43,6 +53,81 @@ fun dateText(epochMs: Long): String =
     DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale.getDefault()).format(Date(epochMs))
 
 fun timeText(epochMs: Long): String = DateFormat.getTimeInstance(DateFormat.SHORT, Locale.getDefault()).format(Date(epochMs))
+
+/** "11월 12일" / "Nov 12" — for one-line summaries. */
+fun shortDateText(epochMs: Long): String = SimpleDateFormat(if (isKorean()) "M월 d일" else "MMM d", Locale.getDefault()).format(Date(epochMs))
+
+/** Button label for the one climate action (ComfortRules.climateAction). */
+@Composable
+fun climateActionLabel(action: ClimateAction): String = when (action) {
+    ClimateAction.TurnOn -> stringResource(R.string.climate_turn_on)
+    is ClimateAction.CoolTo -> stringResource(R.string.climate_cool_to_fmt, action.target)
+    is ClimateAction.HeatTo -> stringResource(R.string.climate_heat_to_fmt, action.target)
+}
+
+/** Release builds (no Vehicle Control): what the driver should do instead. */
+@Composable
+fun climateActionGuide(action: ClimateAction): String = when (action) {
+    ClimateAction.TurnOn -> stringResource(R.string.climate_guide_turn_on)
+    is ClimateAction.CoolTo -> stringResource(R.string.climate_guide_cool_fmt, action.target)
+    is ClimateAction.HeatTo -> stringResource(R.string.climate_guide_heat_fmt, action.target)
+}
+
+/** Integer degrees for Home and pet-alone ("19°"); decimals only in the Footprints detail and debug. */
+fun tempInt(t: Float?): String = t?.let { "${it.roundToInt()}°" } ?: "—"
+
+/** "1시간 30분" / "15분" — whole minutes, never a ticking clock (driving rule). */
+@Composable
+fun minutesText(sec: Int): String {
+    val m = wholeMinutes(sec)
+    val h = m / 60
+    val mm = m % 60
+    return when {
+        h > 0 && mm > 0 -> stringResource(R.string.hours_minutes_fmt, h, mm)
+        h > 0 -> stringResource(R.string.hours_fmt, h)
+        else -> stringResource(R.string.minutes_fmt, mm)
+    }
+}
+
+/** Banner line: what to do, worded for the screen it is read on (care/AlertTexts). */
+@Composable
+fun alertText(alert: Alert, state: CareState): String {
+    val res = alertMessageRes(alert.kind, alert.context)
+    return if (alert.kind == AlertKind.MEAL) stringResource(res, state.data.lastMealAt?.let { ((System.currentTimeMillis() - it) / 60_000).toInt() } ?: 0)
+    else stringResource(res)
+}
+
+val AlertKind.iconRes: Int
+    get() = when (this) {
+        AlertKind.HEAT -> R.drawable.ic_error
+        AlertKind.HVAC_OFF, AlertKind.LEAVE_PREP -> R.drawable.ic_mode_fan
+        AlertKind.WINDOW_OPEN -> R.drawable.ic_sensor_window
+        AlertKind.DOOR_OPEN -> R.drawable.ic_door_open
+        AlertKind.BELT -> R.drawable.ic_airline_seat_recline_normal
+        AlertKind.MEAL -> R.drawable.ic_schedule
+        AlertKind.BREAK_DUE -> R.drawable.ic_local_cafe
+    }
+
+/** Timeline icon per event; danger events get the warning colour in the Footprints detail. */
+val EventType.iconRes: Int
+    get() = when (this) {
+        EventType.TRIP_START -> R.drawable.ic_route
+        EventType.TRIP_END -> R.drawable.ic_local_parking
+        EventType.BREAK_SUGGESTED, EventType.BREAK_TAKEN -> R.drawable.ic_local_cafe
+        EventType.BRAKE_BURST -> R.drawable.ic_error
+        EventType.SPORT_MODE -> R.drawable.ic_speed
+        EventType.WINDOW_OPEN -> R.drawable.ic_sensor_window
+        EventType.BELT_UNBUCKLED -> R.drawable.ic_airline_seat_recline_normal
+        EventType.DOOR_OPEN_AT_STOP -> R.drawable.ic_door_open
+        EventType.TEMP_OUT_OF_BAND -> R.drawable.ic_thermostat
+        EventType.CLIMATE_APPLIED -> R.drawable.ic_mode_fan
+        EventType.CALM_ON, EventType.CALM_OFF -> R.drawable.ic_graphic_eq
+        EventType.CHECK_IN -> R.drawable.ic_sentiment_satisfied
+    }
+
+val EventType.isDanger: Boolean
+    get() = this == EventType.BRAKE_BURST || this == EventType.WINDOW_OPEN || this == EventType.TEMP_OUT_OF_BAND ||
+        this == EventType.DOOR_OPEN_AT_STOP || this == EventType.SPORT_MODE
 
 /** "성견 · 3년 2개월" — life stage plus age when the birth date is known. */
 @Composable
@@ -65,6 +150,22 @@ fun heatRiskLabels(dog: DogProfile): List<String> = buildList {
         AgeGroup.SENIOR -> add(stringResource(R.string.risk_senior))
         AgeGroup.ADULT -> Unit
     }
+}
+
+/** User wording for one applied climate change ("19°C", "바닥 송풍"), never the SDK property names. */
+@Composable
+fun changeText(change: Change): String = when (change) {
+    is Change.Temperature -> stringResource(R.string.change_temp_fmt, change.celsius)
+    is Change.FanSpeed -> stringResource(R.string.change_fan_fmt, change.level)
+    is Change.Direction -> stringResource(
+        when (change.direction) {
+            AirDirection.FACE -> R.string.change_dir_face
+            AirDirection.FLOOR -> R.string.change_dir_floor
+            AirDirection.FACE_AND_FLOOR -> R.string.change_dir_both
+        },
+    )
+    Change.Power -> stringResource(R.string.change_power)
+    is Change.Window -> stringResource(R.string.change_window)
 }
 
 val DogSize.labelRes: Int

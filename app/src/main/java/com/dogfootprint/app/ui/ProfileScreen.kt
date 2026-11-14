@@ -92,7 +92,8 @@ fun ProfileScreen(vm: CareViewModel, state: CareState) {
     }
 }
 
-private fun newDog() = DogProfile(id = UUID.randomUUID().toString(), name = "", breedKey = BreedPresets.all.first().key, size = DogSize.TOY, coat = CoatType.LONG_SINGLE)
+/** A new dog starts without a breed; the picker fills size/coat/brachycephaly when one is chosen. */
+private fun newDog() = DogProfile(id = UUID.randomUUID().toString(), name = "", breedKey = "", size = DogSize.SMALL, coat = CoatType.SHORT)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -103,16 +104,38 @@ private fun DogEditor(dog: DogProfile, onChange: (DogProfile) -> Unit, onSave: (
             value = dog.name, onValueChange = { onChange(dog.copy(name = it)) }, singleLine = true, textStyle = PleosType.bodyLarge,
             label = { Text(stringResource(R.string.profile_name), style = PleosType.labelMedium) }, modifier = Modifier.fillMaxWidth(),
         )
+        var pickingBreed by remember(dog.id) { mutableStateOf(dog.breedKey.isBlank()) }
         Section(stringResource(R.string.profile_breed)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12), verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
-                BreedPresets.all.forEach { b ->
-                    PleosToggleButton(
-                        if (isKorean()) b.nameKo else b.nameEn, on = dog.breedKey == b.key, size = ButtonSize.Small,
-                        onToggle = { onChange(dog.copy(breedKey = b.key, size = b.size, coat = b.coat, brachycephalic = b.brachycephalic)) },
-                    )
+            if (!pickingBreed) {
+                // Chosen breed as one row; the grouped picker only when changing, so the editor is not a wall of chips.
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PleosDims.space16)) {
+                    Text(breedName(dog.breedKey), style = PleosType.bodyLargeStrong, color = c.textPrimary)
+                    PleosButton(stringResource(R.string.action_change), onClick = { pickingBreed = true }, size = ButtonSize.Small, primary = false)
                 }
+            } else {
+                if (dog.breedKey.isBlank()) Text(stringResource(R.string.profile_pick_breed), style = PleosType.bodyMedium, color = c.textSecondary)
+                // Size first, then only that size's breeds: a short row instead of a wall of chips.
+                var group by remember(dog.id) { mutableStateOf<DogSize?>(if (dog.breedKey == BreedPresets.OTHER_KEY) null else dog.size) }
+                val sizes = DogSize.entries.filter { sz -> BreedPresets.all.any { it.size == sz && it.key != BreedPresets.OTHER_KEY } }
+                Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+                    sizes.forEach { sz -> PleosToggleButton(stringResource(sz.labelRes), on = group == sz, size = ButtonSize.Small, onToggle = { group = sz }) }
+                    PleosToggleButton(stringResource(R.string.breed_group_other), on = group == null, size = ButtonSize.Small, onToggle = { group = null })
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12), verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+                    BreedPresets.all.filter { if (group == null) it.key == BreedPresets.OTHER_KEY else it.size == group && it.key != BreedPresets.OTHER_KEY }.forEach { b ->
+                        PleosToggleButton(
+                            if (isKorean()) b.nameKo else b.nameEn, on = dog.breedKey == b.key, size = ButtonSize.Small,
+                            onToggle = { onChange(dog.copy(breedKey = b.key, size = b.size, coat = b.coat, brachycephalic = b.brachycephalic)); pickingBreed = false },
+                        )
+                    }
+                }
+                if (dog.breedKey == BreedPresets.OTHER_KEY) Text(stringResource(R.string.breed_other_hint), style = PleosType.bodyMedium, color = c.textTertiary)
             }
-            if (dog.breedKey == BreedPresets.OTHER_KEY) Text(stringResource(R.string.breed_other_hint), style = PleosType.bodyMedium, color = c.textTertiary)
+            // What the breed changes, right where it is chosen.
+            val band = comfortBand(dog)
+            PleosStatusLine(R.drawable.ic_thermostat, stringResource(R.string.profile_band_preview, band.lower, band.upper, breakIntervalMin(dog, false)), tint = c.textPrimary, style = PleosType.bodyLargeStrong)
+            val risks = heatRiskLabels(dog)
+            if (risks.isNotEmpty()) Text(stringResource(R.string.profile_heat_risk, risks.joinToString(", ")), style = PleosType.bodyMedium, color = c.textTertiary)
         }
         Section(stringResource(R.string.profile_traits)) {
             OptionRow(stringResource(R.string.profile_size), DogSize.entries, dog.size, { stringResource(it.labelRes) }) { onChange(dog.copy(size = it)) }
@@ -152,12 +175,8 @@ private fun DogEditor(dog: DogProfile, onChange: (DogProfile) -> Unit, onSave: (
             }
             if (dog.restraint == Restraint.NONE) Text(stringResource(R.string.restraint_none_hint), style = PleosType.bodyMedium, color = c.negative)
         }
-        val risks = heatRiskLabels(dog)
-        if (risks.isNotEmpty()) Text(stringResource(R.string.profile_heat_risk, risks.joinToString(", ")), style = PleosType.bodyMedium, color = c.textTertiary)
-        val band = comfortBand(dog)
-        PleosStatusLine(R.drawable.ic_thermostat, stringResource(R.string.profile_band_preview, band.lower, band.upper, breakIntervalMin(dog, false)), tint = c.textSecondary)
         Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space16)) {
-            PleosButton(stringResource(R.string.action_save), onClick = { onSave(dog) }, enabled = dog.name.isNotBlank(), size = ButtonSize.Large)
+            PleosButton(stringResource(R.string.action_save), onClick = { onSave(dog) }, enabled = dog.name.isNotBlank() && dog.breedKey.isNotBlank(), size = ButtonSize.Large)
             PleosButton(stringResource(R.string.action_delete), onClick = { onDelete(dog) }, primary = false, size = ButtonSize.Large, icon = R.drawable.ic_delete)
         }
     }

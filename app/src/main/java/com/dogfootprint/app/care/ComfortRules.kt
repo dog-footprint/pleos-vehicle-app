@@ -9,6 +9,7 @@ import com.dogfootprint.app.data.EventType
 import com.dogfootprint.app.data.Tendency
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 /*
  * Pure rules, no Android or SDK types, so they are unit-testable. Every constant traces to a line in
@@ -99,6 +100,13 @@ fun isHeatAlert(p: DogProfile, zoneTemp: Float?): Boolean {
     if (zoneTemp == null) return false
     val threshold = if (p.brachycephalic || p.respiratoryOrHeartIssue) HEAT_ALERT_BRACHY_TEMP else HEAT_ALERT_ANY_TEMP
     return zoneTemp >= threshold
+}
+
+/** Degrees outside the band: negative below `lower`, positive above `upper`, 0 inside. The Home screen shows this instead of repeating the banner sentence. */
+fun bandDelta(band: ComfortBand, zoneTemp: Float): Float = when {
+    zoneTemp < band.lower -> zoneTemp - band.lower
+    zoneTemp > band.upper -> zoneTemp - band.upper
+    else -> 0f
 }
 
 enum class ClimateVerdict { UNKNOWN, OK, TOO_HOT, TOO_COLD, HEAT_ALERT, HVAC_OFF }
@@ -203,6 +211,90 @@ fun comfortScore(counts: Map<EventType, Int>): Int {
         5 * c(EventType.TEMP_OUT_OF_BAND)
     return score.coerceIn(0, 100)
 }
+
+const val PET_ALONE_CONFIRM_MS = 30_000L
+
+enum class AlertLevel { DANGER, CAUTION }
+enum class AlertKind { HEAT, HVAC_OFF, WINDOW_OPEN, DOOR_OPEN, BELT, MEAL, BREAK_DUE, LEAVE_PREP }
+/** Which screen the alert is read on; wording (AlertTexts) and the exclusion rules depend on it. */
+enum class AlertContext { DRIVING, PARKED, PRE_EXIT, PET_ALONE }
+data class Alert(val kind: AlertKind, val level: AlertLevel, val context: AlertContext)
+
+fun alertContext(moving: Boolean, preExit: Boolean, petAlone: Boolean): AlertContext = when {
+    petAlone -> AlertContext.PET_ALONE
+    preExit -> AlertContext.PRE_EXIT
+    moving -> AlertContext.DRIVING
+    else -> AlertContext.PARKED
+}
+
+/**
+ * Warning ladder. DANGER stays until the condition ends and has no close button; CAUTION can be dismissed but
+ * keeps a status line. Order inside a level is the display priority. The PRE_EXIT and PET_ALONE screens show the
+ * temperature, climate power and verdict in their body, so climate alerts are left out there and only the
+ * window/door conditions remain (3rd review §6). Nothing is raised about a dog that is not on board.
+ */
+fun activeAlerts(
+    ctx: AlertContext,
+    verdict: ClimateVerdict?,
+    safety: Set<SafetyFlag>,
+    meal: MealNotice,
+    breakPhase: BreakPhase,
+    aboard: Boolean,
+    leavePrep: Boolean,
+    hvacOff: Boolean = false,
+    hvacOffLevel: AlertLevel = AlertLevel.CAUTION,
+): List<Alert> = buildList {
+    fun raise(kind: AlertKind, level: AlertLevel) = add(Alert(kind, level, ctx))
+    val driving = ctx == AlertContext.DRIVING
+    val bodyShowsClimate = ctx == AlertContext.PRE_EXIT || ctx == AlertContext.PET_ALONE
+    if (!bodyShowsClimate && aboard) {
+        if (verdict == ClimateVerdict.HEAT_ALERT) raise(AlertKind.HEAT, AlertLevel.DANGER)
+        if (hvacOff) raise(AlertKind.HVAC_OFF, hvacOffLevel)   // caution inside the band, danger outside or heading out
+    }
+    if (SafetyFlag.WINDOW_OPEN in safety) raise(AlertKind.WINDOW_OPEN, AlertLevel.DANGER)
+    if (SafetyFlag.DOOR_OPEN in safety && !driving && aboard) raise(AlertKind.DOOR_OPEN, AlertLevel.DANGER)
+    if (ctx == AlertContext.PARKED && leavePrep) raise(AlertKind.LEAVE_PREP, AlertLevel.CAUTION)
+    if (SafetyFlag.BELT_UNBUCKLED in safety && aboard && driving) raise(AlertKind.BELT, AlertLevel.CAUTION)   // parked: the body says it
+    if (meal == MealNotice.WARN && aboard && (driving || ctx == AlertContext.PARKED)) raise(AlertKind.MEAL, AlertLevel.CAUTION)
+    if (breakPhase == BreakPhase.DUE && driving) raise(AlertKind.BREAK_DUE, AlertLevel.CAUTION)
+}.sortedBy { it.level.ordinal }   // the slot shows the first one: dangers before cautions, insertion order inside a level
+
+/** What the one climate button should do; the leaving and pet-alone screens share it (4th review §1). */
+sealed interface ClimateAction {
+    data object TurnOn : ClimateAction
+    data class CoolTo(val target: Int) : ClimateAction
+    data class HeatTo(val target: Int) : ClimateAction
+}
+
+fun bandCentre(band: ComfortBand): Int = ((band.lower + band.upper) / 2f).roundToInt()
+
+fun climateAction(hvacPower: Boolean?, verdict: ClimateVerdict?, band: ComfortBand?): ClimateAction? = when {
+    hvacPower == false -> ClimateAction.TurnOn
+    band == null -> null
+    verdict == ClimateVerdict.HEAT_ALERT || verdict == ClimateVerdict.TOO_HOT -> ClimateAction.CoolTo(bandCentre(band))
+    verdict == ClimateVerdict.TOO_COLD -> ClimateAction.HeatTo(bandCentre(band))
+    else -> null
+}
+
+/** Climate off: a caution while the cabin is inside the band and not leaving it within 10 min at the current trend, else a danger. */
+const val HVAC_OFF_TREND_MIN = 10
+fun hvacOffLevel(zoneTemp: Float?, band: ComfortBand?, ratePerMin: Float?): AlertLevel {
+    if (zoneTemp == null || band == null) return AlertLevel.CAUTION
+    if (zoneTemp < band.lower || zoneTemp > band.upper) return AlertLevel.DANGER
+    val ahead = zoneTemp + (ratePerMin ?: 0f) * HVAC_OFF_TREND_MIN
+    return if (ahead < band.lower || ahead > band.upper) AlertLevel.DANGER else AlertLevel.CAUTION
+}
+
+/**
+ * Leaving the car, stage 2: dog on board, parked, driver's door open, dog not yet counted as alone. Stage 1 (the
+ * reminder at the P shift) and the 30 s grace after the door closes live in the engine. Gear unknown → "parked"
+ * is taken from the motion detector.
+ */
+fun isPreExit(aboard: Boolean, moving: Boolean, gearPark: Boolean?, driverDoorOpen: Boolean?, petAlone: Boolean): Boolean =
+    aboard && !moving && (gearPark ?: true) && driverDoorOpen == true && !petAlone
+
+/** Minutes shown to the driver instead of a ticking clock: "1시간 30분" granularity is the rule while moving. */
+fun wholeMinutes(sec: Int): Int = (sec + 30) / 60
 
 fun windowOpenFraction(position: Int?, max: Int?): Float? =
     if (position == null || max == null || max <= 0) null else (position.toFloat() / max).coerceIn(0f, 1f)

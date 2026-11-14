@@ -1,6 +1,7 @@
 package com.dogfootprint.app.pleos
 
 import ai.pleos.playground.tts.TextToSpeech
+import android.media.AudioAttributes
 import ai.pleos.playground.tts.constant.ErrorType
 import ai.pleos.playground.tts.constant.Mode
 import ai.pleos.playground.tts.listener.OnInitializeListener
@@ -27,6 +28,12 @@ interface VoiceGuide {
     suspend fun say(text: String, priority: GuidePriority = GuidePriority.INFO): Boolean
 
     fun release() {}
+
+    /**
+     * Recording mode (debug demos): route speech as USAGE_MEDIA so the emulator's screen capture, which only
+     * records the media bus, picks it up. Production keeps USAGE_ASSISTANCE_NAVIGATION_GUIDANCE (ducks media).
+     */
+    fun setMediaUsage(on: Boolean) {}
 }
 
 /** Always-available fallback: the emulator ships no Android TTS engine, so a chime it is. */
@@ -60,6 +67,18 @@ class PleosTtsVoiceGuide(
     override val status = MutableStateFlow(SdkStatus.UNKNOWN)
     override val detail = MutableStateFlow<String?>(null)
     private var tts: TextToSpeech? = null
+    @Volatile private var mediaUsage = false
+
+    /** The service reads the attributes at initialize time, so switching means re-registering (≈1–2 s). */
+    override fun setMediaUsage(on: Boolean) {
+        if (mediaUsage == on) return
+        mediaUsage = on
+        release(); connect()
+    }
+
+    private fun attributes() = AudioAttributes.Builder()
+        .setUsage(if (mediaUsage) AudioAttributes.USAGE_MEDIA else AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
 
     fun connect() {
         if (status.value == SdkStatus.READY || status.value == SdkStatus.CONNECTING) return
@@ -70,6 +89,7 @@ class PleosTtsVoiceGuide(
         try {
             val engine = TextToSpeech(context.applicationContext, Mode.HYBRID)
             tts = engine
+            runCatching { engine.setAudioAttributes(attributes()) }
             engine.initialize(object : OnInitializeListener {
                 override fun onSuccess() {
                     engine.registerApp(clientId, clientSecret, object : OnServerConnectionListener {
@@ -98,6 +118,7 @@ class PleosTtsVoiceGuide(
     override suspend fun say(text: String, priority: GuidePriority): Boolean {
         val engine = tts ?: return false
         if (status.value != SdkStatus.READY) return false
+        runCatching { engine.setAudioAttributes(attributes()) }
         return runCatching { engine.speak(text, true); true }
             .onFailure { fail("speak: ${it.message}") }
             .getOrDefault(false)
@@ -116,6 +137,7 @@ class CompositeVoiceGuide(
     private val fallback: VoiceGuide,
     private val usePrimary: () -> Boolean,
 ) : VoiceGuide {
+    override fun setMediaUsage(on: Boolean) { primary.setMediaUsage(on); fallback.setMediaUsage(on) }
     override val status get() = primary.status
     override val detail get() = primary.detail
 

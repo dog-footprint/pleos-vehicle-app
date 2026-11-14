@@ -4,6 +4,7 @@ import ai.pleos.playground.vehicle.api.model.area.DoorArea
 import ai.pleos.playground.vehicle.api.model.area.SeatArea
 import ai.pleos.playground.vehicle.api.model.area.WindowArea
 import ai.pleos.playground.vehicle.constant.area.DoorValue
+import ai.pleos.playground.vehicle.constant.area.SeatValue
 import ai.pleos.playground.vehicle.constant.area.WindowValue
 import ai.pleos.playground.vehicle.constant.control.DrivingModeType
 import ai.pleos.playground.vehicle.constant.control.FanDirectionType
@@ -33,6 +34,7 @@ import com.dogfootprint.app.pleos.VehicleSource
 import com.dogfootprint.app.pleos.VoiceGuide
 import com.dogfootprint.app.pleos.ZoneAreas
 import java.util.UUID
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -48,6 +50,9 @@ private const val TICK_MS = 1_000L
 private const val PERSIST_EVERY_MS = 30_000L
 private const val FAN_DIRECTION_POLL_MS = 30_000L
 private const val PET_ALONE_GUIDE_COOLDOWN_MS = 5 * 60_000L
+
+/** Demo override of what the vehicle reports, so a scripted scenario is self-consistent (measured, set-point, power). */
+data class DemoClimate(val zoneTemp: Float, val targetTemp: Float? = null, val hvacPower: Boolean? = null)
 
 data class VehicleSnapshot(
     val odometerKm: Float? = null,
@@ -68,6 +73,10 @@ data class VehicleSnapshot(
     val doorPositions: Map<DoorValue, Int> = emptyMap(),
     /** Driver's door (ROW_1_LEFT) — used to notice the driver leaving the dog in a parked car. */
     val driverDoorOpen: Boolean? = null,
+    /** Front passenger seat — someone staying in the car means the dog is not alone (3rd review item 7). */
+    val passengerOccupied: Boolean? = null,
+    /** Power-down warning telltale; the SDK has no ignition state. */
+    val powerDownWarning: Boolean? = null,
     val brakePressed: Boolean? = null,
     val drivingMode: DrivingModeType? = null,
     val gearPark: Boolean? = null,
@@ -119,11 +128,41 @@ data class CareState(
     val lifeStage: AgeGroup? = null,
     val mealNotice: MealNotice = MealNotice.NONE,
     val diagnostics: Diagnostics = Diagnostics(),
-    val demoTemp: Float? = null,
+    val demoClimate: DemoClimate? = null,
+    /** Pet alone and the cabin is a DANGER (ComfortRules.hvacOffLevel / out of band) — the voice condition, shared with the UI. */
+    val petAloneRisky: Boolean = false,
+    /** How bad the cabin is for a dog left in it: null = fine, CAUTION = climate off but inside the band, DANGER = outside or heading out. */
+    val cabinLevel: AlertLevel? = null,
+    /** Persistent warnings, highest level first (ComfortRules.activeAlerts). */
+    val alerts: List<Alert> = emptyList(),
+    /** CAUTION alerts the driver closed; they stay as a status line until the condition ends. */
+    val dismissedCautions: Set<AlertKind> = emptySet(),
+    /** A trip that just ended and still needs its mood check-in on the Home screen. */
+    val pendingCheckIn: Trip? = null,
+    /** Leaving, stage 2: parked, dog on board, driver's door open (ComfortRules.isPreExit). */
+    val preExit: Boolean = false,
+    /** Leaving, stage 1: parked with a risky cabin — reminder to leave the climate on. */
+    val leavePrep: Boolean = false,
+    /** Pet alone and the driver's door opened again: show the summary and the way out. */
+    val driverBack: Boolean = false,
+    val petAloneMaxTemp: Float? = null,
 ) {
     val dogTrips: List<Trip> get() = dog?.let { d -> data.trips.filter { it.dogId == d.id && !it.isActive } } ?: emptyList()
     val totalKm: Float get() = dogTrips.sumOf { it.distanceKm.toDouble() }.toFloat()
+    /** The one alert the slot shows; dismissed cautions fall through to the next. */
+    val topAlert: Alert? get() = alerts.firstOrNull { it.level == AlertLevel.DANGER || it.kind !in dismissedCautions }
 }
+
+/**
+ * Everything that only means something during a trip goes back to idle: break timer, meal notice, apply result,
+ * banner, boarding and the trip itself. Pure so the reset is unit-tested (review §2-D).
+ */
+fun CareState.afterTripEnd(): CareState = copy(
+    trip = null, askTripEnd = false, drivenSinceBreakSec = 0, breakPhase = BreakPhase.NONE, lastApply = null, banner = null,
+    mealNotice = MealNotice.NONE, heatAlert = false, alerts = emptyList(), dismissedCautions = emptySet(), aboard = false,
+    petAlone = false, petAloneSince = null, petAloneRisky = false, cabinLevel = null, preExit = false, leavePrep = false, driverBack = false, petAloneMaxTemp = null,
+    data = data.copy(aboardDogId = null, lastMealAt = null),
+)
 
 /**
  * Application-scoped brain: combines the dog profile with live vehicle / navigation signals into
@@ -165,7 +204,16 @@ class CareEngine(
     private var windowFlagged = false
     private var lastBreakPhase = BreakPhase.NONE
     private var restAreaSuggestedAtKm: Double? = null
-    private var demoTemp: Float? = null
+    private var demoClimate: DemoClimate? = null
+    private var demoBelt: Boolean? = null
+    private var doorClosedAt: Long? = null
+    private var petAloneMax: Float? = null
+    private var prevGearPark: Boolean? = null
+    private var leavePrep = false
+    private var leavePrepSpoken = false
+    private var driverBack = false
+    /** (time, seat temperature) over the last two minutes — the trend behind hvacOffLevel. */
+    private val tempHistory = ArrayDeque<Pair<Long, Float>>()
     private var driverDoorCycled = false
     private var petAloneSince: Long? = null
     private var lastPetAloneGuideAt: Long? = null
@@ -193,6 +241,8 @@ class CareEngine(
         watch("drivingMode", vehicle.drivingMode()) { v -> snap.update { it.copy(drivingMode = v) } }
         watch("gear", vehicle.gear()) { v -> snap.update { it.copy(gearPark = v == VehicleGear.GEAR_PARK) } }
         watch("driverDoor", vehicle.doorPosition(DoorArea(DoorValue.ROW_1_LEFT))) { v -> snap.update { it.copy(driverDoorOpen = v > 0) } }
+        watch("passengerOccupancy", vehicle.seatOccupancy(SeatArea(SeatValue.ROW_1_RIGHT))) { v -> snap.update { it.copy(passengerOccupied = v) } }
+        watch("powerDownWarning", vehicle.powerDownWarning()) { v -> snap.update { it.copy(powerDownWarning = v) } }
         watch("brakePedal", vehicle.brakePedal()) { pressed ->
             snap.update { it.copy(brakePressed = pressed) }
             if (brakeDetector.onPedal(pressed, clock(), motion.moving)) onBrakeBurst()
@@ -256,9 +306,34 @@ class CareEngine(
             endLat = snap.value.lat ?: trip.endLat, endLon = snap.value.lon ?: trip.endLon,
         )
         clearTripState()
-        _state.update { it.copy(trip = null, askTripEnd = false, drivenSinceBreakSec = 0, breakPhase = BreakPhase.NONE, lastApply = null, banner = null) }
-        scope.launch { repo.upsertTrip(done); repo.setAboard(null) }
+        driverDoorCycled = false; petAloneSince = null
+        _state.update { it.afterTripEnd().copy(pendingCheckIn = if (mood == null) done else null) }
+        scope.launch { repo.upsertTrip(done); repo.setAboard(null); repo.setLastMeal(null) }
     }
+
+    /** Mood chosen on the Home check-in card (one tap saves). */
+    fun checkIn(mood: Mood) {
+        val trip = _state.value.pendingCheckIn ?: return
+        val saved = trip.copy(mood = mood)
+        _state.update { it.copy(pendingCheckIn = saved) }
+        scope.launch { repo.upsertTrip(saved) }
+    }
+
+    fun addNote(note: String) {
+        val trip = _state.value.pendingCheckIn ?: return
+        val saved = trip.copy(note = note.takeIf { it.isNotBlank() })
+        _state.update { it.copy(pendingCheckIn = saved) }
+        scope.launch { repo.upsertTrip(saved) }
+    }
+
+    fun dismissCheckIn() = _state.update { it.copy(pendingCheckIn = null) }
+
+    /** "내리기": ends the trip if one is running, otherwise just clears boarding. */
+    fun unboard() {
+        if (_state.value.trip != null) endTrip(null, null) else { setAboard(false); _state.update { it.copy(mealNotice = MealNotice.NONE) }; scope.launch { repo.setLastMeal(null) } }
+    }
+
+    fun dismissAlert(kind: AlertKind) = _state.update { it.copy(dismissedCautions = it.dismissedCautions + kind) }
 
     fun markBreakTaken() {
         val trip = _state.value.trip ?: return
@@ -269,9 +344,26 @@ class CareEngine(
     }
 
     fun applyClimate() {
+        val plan = _state.value.climate ?: return
+        applyPlan(plan, R.string.guide_climate_applied)
+    }
+
+    /** The one climate button (leaving / pet alone): the shared cause → action mapping, aimed at the band centre. */
+    fun keepClimate() {
+        val s = _state.value
+        val band = s.band ?: return
+        val plan = when (val action = climateAction(s.vehicle.hvacPower, s.climate?.verdict, band)) {
+            ClimateAction.TurnOn -> ClimatePlan(ClimateVerdict.HVAC_OFF, targetTemp = bandCentre(band).toFloat())
+            is ClimateAction.CoolTo -> ClimatePlan(ClimateVerdict.TOO_HOT, targetTemp = action.target.toFloat(), fanSpeed = s.climate?.fanSpeed, direction = s.climate?.direction)
+            is ClimateAction.HeatTo -> ClimatePlan(ClimateVerdict.TOO_COLD, targetTemp = action.target.toFloat(), direction = s.climate?.direction)
+            null -> return
+        }
+        applyPlan(plan, if (plan.verdict == ClimateVerdict.HVAC_OFF) R.string.guide_climate_kept else R.string.guide_climate_applied)
+    }
+
+    private fun applyPlan(plan: ClimatePlan, doneRes: Int) {
         val s = _state.value
         val dog = s.dog ?: return
-        val plan = s.climate ?: return
         if (s.applying) return
         _state.update { it.copy(applying = true) }
         scope.launch {
@@ -284,10 +376,15 @@ class CareEngine(
                 st.copy(applying = false, lastApply = result, trip = trip)
             }
             if (result is ApplyResult.Applied || result is ApplyResult.Partial) {
-                guide(context.getString(R.string.guide_climate_applied, zoneLabel(dog.seat)), GuidePriority.INFO)
+                // Keep a demo scenario consistent with what was just set, so the Home line does not show the old set-point.
+                demoClimate?.let { d -> demoClimate = d.copy(targetTemp = plan.targetTemp ?: d.targetTemp, hvacPower = true) }
+                guide(context.getString(doneRes, zoneLabel(dog.seat)), GuidePriority.INFO)
             }
         }
     }
+
+    fun setDemoBelt(buckled: Boolean?) { demoBelt = buckled }
+    fun setRecordMode(on: Boolean) = voice.setMediaUsage(on)
 
     fun toggleCalm() {
         if (calm.playing.value) {
@@ -329,14 +426,21 @@ class CareEngine(
         if (!s.aboard) setAboard(true)
         driverDoorCycled = true
         petAloneSince = clock()
+        doorClosedAt = petAloneSince; petAloneMax = null; driverBack = false
         lastPetAloneGuideAt = null
     }
 
-    fun setDemoTemp(t: Float?) {
-        demoTemp = t
+    fun setDemoClimate(d: DemoClimate?) {
+        demoClimate = d
+        _state.update { it.copy(lastApply = null) }   // a new scenario should not keep the previous apply line
         // Skip the out-of-band grace/cooldown so the guidance fires on the next tick.
-        outOfBandSince = if (t != null) clock() - TEMP_OUT_OF_BAND_GRACE_MS else null
+        outOfBandSince = if (d != null) clock() - TEMP_OUT_OF_BAND_GRACE_MS else null
         lastTempEventAt = null
+    }
+    /** Demo: the driver left, the cabin is hot and the climate is off — the worst pet-alone case. */
+    fun demoPetAloneRisk() {
+        demoPetAlone()
+        setDemoClimate(DemoClimate(zoneTemp = 27f, hvacPower = false))
     }
 
     // ---- internals -------------------------------------------------------------------------------
@@ -414,11 +518,15 @@ class CareEngine(
         val moving = motion.update(v.gearPark, v.odometerKm, now)
         val dog = s.dog
         val stage = dog?.lifeStage(now)
-        val zoneTemp = demoTemp ?: v.zoneTemp
+        val demo = demoClimate
+        val zoneTemp = demo?.zoneTemp ?: v.zoneTemp
+        val hvacPower = demo?.hvacPower ?: v.hvacPower
+        val beltBuckled = demoBelt ?: v.beltBuckled
+        val targetTemp = demo?.targetTemp ?: v.targetTemp
         val band = dog?.let { comfortBand(it, stage!!) }
         val heat = dog != null && isHeatAlert(dog, zoneTemp)
         val meal = if (dog != null) mealNotice(s.data.lastMealAt, now, dog, stage!!) else MealNotice.NONE
-        val plan = if (dog != null && band != null) climatePlan(dog, band, zoneTemp, v.hvacPower, v.fanSpeed, v.fanMax, moving) else null
+        val plan = if (dog != null && band != null) climatePlan(dog, band, zoneTemp, hvacPower, v.fanSpeed, v.fanMax, moving) else null
 
         var trip = s.trip
         var drivenSinceBreak = s.drivenSinceBreakSec
@@ -490,14 +598,16 @@ class CareEngine(
         if (windowFlagged) flags += SafetyFlag.WINDOW_OPEN
 
         val dogPresent = v.occupancy == true || (v.occupancy == null && s.aboard)
-        if (moving && dogPresent && v.beltBuckled == false) {
+        if (moving && dogPresent && beltBuckled == false) {
             flags += SafetyFlag.BELT_UNBUCKLED
             if (!beltFlagged) {
                 beltFlagged = true
                 trip = trip?.withEvent(EventType.BELT_UNBUCKLED, now)
                 guide(context.getString(R.string.guide_belt, dog?.name ?: ""), GuidePriority.WARN)
             }
-        } else if (v.beltBuckled == true) {
+        } else if (!moving && s.aboard && dogPresent && beltBuckled == false) {
+            flags += SafetyFlag.BELT_UNBUCKLED   // parked after boarding: the one thing to do before leaving (3rd review D2)
+        } else if (beltBuckled == true) {
             beltFlagged = false
         }
         if (v.doorOpen == true) flags += SafetyFlag.DOOR_OPEN
@@ -518,26 +628,54 @@ class CareEngine(
             if (now - since >= TEMP_OUT_OF_BAND_GRACE_MS && cooledDown && dog != null) {
                 lastTempEventAt = now
                 trip = trip?.withEvent(EventType.TEMP_OUT_OF_BAND, now, zoneTemp?.let { "%.1f°C".format(it) })
-                guide(climateText(dog, plan), if (plan.verdict == ClimateVerdict.HEAT_ALERT) GuidePriority.ALERT else GuidePriority.WARN)
+                // The leaving and pet-alone screens have their own (parked) wording; the driving sentence stays off there.
+                if (!s.preExit && !s.petAlone) guide(climateText(dog, plan), if (plan.verdict == ClimateVerdict.HEAT_ALERT) GuidePriority.ALERT else GuidePriority.WARN)
             }
         } else {
             outOfBandSince = null
         }
 
-        // Pet alone: parked + dog on board + the driver's door opened and closed again.
-        if (moving || !s.aboard || dog == null) {
-            driverDoorCycled = false; petAloneSince = null
-        } else {
-            if (v.driverDoorOpen == true) driverDoorCycled = true
-            else if (driverDoorCycled && v.driverDoorOpen == false && petAloneSince == null) petAloneSince = now
+        // Leaving the car. Stage 1: the P shift (or a power-down warning) with a risky cabin reminds the driver to
+        // leave the climate on. Stage 2: the driver's door opens → PreExitHome. Door closed → 30 s grace (driving off
+        // or shifting cancels), then the dog counts as alone unless someone is still in the passenger seat.
+        zoneTemp?.let { t -> tempHistory.addLast(now to t); while (tempHistory.isNotEmpty() && now - tempHistory.first().first > 120_000L) tempHistory.removeFirst() }
+        val ratePerMin = tempHistory.takeIf { it.size >= 2 && it.last().first - it.first().first >= 60_000L }
+            ?.let { (it.last().second - it.first().second) / ((it.last().first - it.first().first) / 60_000f) }
+        val hvacLevel = hvacOffLevel(zoneTemp, band, ratePerMin)
+        val cabinLevel: AlertLevel? = when {
+            hvacPower == false -> hvacLevel
+            plan != null && plan.needsAction -> AlertLevel.DANGER
+            else -> null
         }
+        val cabinRisky = cabinLevel != null
+        val parkedNow = v.gearPark ?: !moving
+        if (moving || !s.aboard || dog == null || v.gearPark == false) {
+            driverDoorCycled = false; petAloneSince = null; doorClosedAt = null; petAloneMax = null
+            leavePrep = false; leavePrepSpoken = false; driverBack = false
+        } else {
+            val justParked = parkedNow && prevGearPark == false
+            if ((justParked || v.powerDownWarning == true) && cabinRisky && petAloneSince == null && v.driverDoorOpen != true) leavePrep = true
+            if (!cabinRisky) leavePrep = false
+            if (v.driverDoorOpen == true) {
+                driverDoorCycled = true; doorClosedAt = null; leavePrep = false
+                if (petAloneSince != null) driverBack = true
+                else if (cabinRisky && !leavePrepSpoken) { leavePrepSpoken = true; guide(context.getString(R.string.guide_leave_prep, dog.name), GuidePriority.WARN) }
+            } else if (driverDoorCycled && v.driverDoorOpen == false && petAloneSince == null) {
+                val closedAt = doorClosedAt ?: now.also { doorClosedAt = it }
+                if (now - closedAt >= PET_ALONE_CONFIRM_MS && v.passengerOccupied != true) petAloneSince = closedAt
+            }
+            if (leavePrep && !leavePrepSpoken) { leavePrepSpoken = true; guide(context.getString(R.string.guide_leave_prep, dog.name), GuidePriority.WARN) }
+        }
+        prevGearPark = parkedNow
         val petAlone = petAloneSince != null
+        val preExit = isPreExit(s.aboard, moving, v.gearPark, v.driverDoorOpen, petAlone)
+        if (petAlone) zoneTemp?.let { t -> petAloneMax = maxOf(petAloneMax ?: t, t) }
+        val risky = petAlone && cabinLevel == AlertLevel.DANGER
         if (petAlone && dog != null) {
-            val risky = v.hvacPower == false || (plan != null && plan.verdict != ClimateVerdict.OK && plan.verdict != ClimateVerdict.UNKNOWN)
             val cooled = lastPetAloneGuideAt?.let { now - it >= PET_ALONE_GUIDE_COOLDOWN_MS } ?: true
             if (risky && cooled) {
                 lastPetAloneGuideAt = now
-                val text = if (v.hvacPower == false) context.getString(R.string.guide_pet_alone_hvac_off, dog.name)
+                val text = if (hvacPower == false) context.getString(R.string.guide_pet_alone_hvac_off, dog.name)
                 else context.getString(R.string.guide_pet_alone_temp, dog.name, zoneTemp ?: 0f)
                 guide(text, GuidePriority.ALERT)
             }
@@ -552,11 +690,14 @@ class CareEngine(
 
         _state.update {
             it.copy(
-                vehicle = v.copy(zoneTemp = zoneTemp), moving = moving, band = band, climate = plan, heatAlert = heat,
+                vehicle = v.copy(zoneTemp = zoneTemp, targetTemp = targetTemp, hvacPower = hvacPower, beltBuckled = beltBuckled), moving = moving, band = band, climate = plan, heatAlert = heat,
                 trip = trip, breakIntervalMin = interval, drivenSinceBreakSec = drivenSinceBreak, breakPhase = phase,
-                restAreaSuggested = suggestRest, safety = flags, askTripEnd = askEnd, demoTemp = demoTemp,
+                restAreaSuggested = suggestRest, safety = flags, askTripEnd = askEnd, demoClimate = demo,
                 petAlone = petAlone, petAloneSince = petAloneSince, lifeStage = stage, mealNotice = meal,
-            )
+                petAloneRisky = risky, cabinLevel = cabinLevel, preExit = preExit, leavePrep = leavePrep, driverBack = driverBack, petAloneMaxTemp = petAloneMax,
+                alerts = activeAlerts(alertContext(moving, preExit, petAlone), plan?.verdict, flags, meal, phase, s.aboard, leavePrep, hvacOff = hvacPower == false, hvacOffLevel = hvacLevel),
+                pendingCheckIn = if (moving) null else it.pendingCheckIn,   // driving off ends the check-in moment
+            ).let { st -> st.copy(dismissedCautions = st.dismissedCautions.filter { k -> st.alerts.any { a -> a.kind == k } }.toSet()) }
         }
     }
 

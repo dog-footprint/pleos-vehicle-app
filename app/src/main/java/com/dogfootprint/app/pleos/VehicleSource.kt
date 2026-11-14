@@ -10,6 +10,7 @@ import ai.pleos.playground.vehicle.constant.control.FanDirectionType
 import ai.pleos.playground.vehicle.constant.control.VehicleGear
 import ai.pleos.playground.vehicle.constant.unit.TemperatureUnit
 import ai.pleos.playground.vehicle.listener.BrakePedalStatusListener
+import ai.pleos.playground.vehicle.listener.PowerDownWarningIndicatorListener
 import ai.pleos.playground.vehicle.listener.DistanceDrivenListener
 import ai.pleos.playground.vehicle.listener.DoorPositionListener
 import ai.pleos.playground.vehicle.listener.DrivingModeStateListener
@@ -53,6 +54,7 @@ class VehicleSource(context: Context) {
     private val window by lazy { vehicle.getWindow() }
     private val door by lazy { vehicle.getDoor() }
     private val brake by lazy { vehicle.getBrake() }
+    private val safety by lazy { vehicle.getSafety() }
     private val drivingMode by lazy { vehicle.getDrivingMode() }
     private val odometer by lazy { vehicle.getOdometer() }
     private val evBattery by lazy { vehicle.getEvBattery() }
@@ -214,6 +216,22 @@ class VehicleSource(context: Context) {
             }
             door.registerDoorPosition(area, l)
             ({ door.unregisterDoorPosition(area, l) })
+        },
+    )
+
+    /**
+     * Power-down warning telltale — the closest the SDK gets to "ignition going off" (there is no ignition or
+     * power-state read API; `IgnitionState` exists but nothing exposes it). No getter, so only updates arrive.
+     */
+    fun powerDownWarning(): Flow<Result<Boolean>> = vehicleFlow(
+        get = { ok, _ -> ok(null) },
+        subscribe = { ok, err ->
+            val l = object : PowerDownWarningIndicatorListener {
+                override fun onPowerDownWarningIndicatorUpdated(value: Boolean?) = ok(value)
+                override fun onFailed(e: Exception) = err(e)
+            }
+            safety.registerPowerDownWarningIndicator(l)
+            ({ safety.unregisterPowerDownWarningIndicator(l) })
         },
     )
 

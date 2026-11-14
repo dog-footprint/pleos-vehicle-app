@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
     private fun applySeed(intent: Intent?) {
         if (!BuildConfig.DEBUG) return
         val b64 = intent?.getStringExtra(EXTRA_SEED_B64) ?: return
+        intent.removeExtra(EXTRA_SEED_B64)   // once: an activity recreate (day/night switch) must not reset the data again
         val app = application as App
         lifecycleScope.launch {
             runCatching { app.repository.importJson(String(Base64.decode(b64, Base64.DEFAULT))) }

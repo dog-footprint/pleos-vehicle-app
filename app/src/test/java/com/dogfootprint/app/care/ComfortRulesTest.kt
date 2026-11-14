@@ -1,5 +1,6 @@
 package com.dogfootprint.app.care
 
+import com.dogfootprint.app.R
 import com.dogfootprint.app.data.AgeGroup
 import com.dogfootprint.app.data.BodyCondition
 import com.dogfootprint.app.data.CoatType
@@ -143,5 +144,103 @@ class ComfortRulesTest {
         assertEquals(100, comfortScore(emptyMap()))
         assertEquals(65, comfortScore(mapOf(EventType.BRAKE_BURST to 2, EventType.SPORT_MODE to 1)))
         assertEquals(0, comfortScore(mapOf(EventType.BRAKE_BURST to 20)))
+    }
+
+    @Test
+    fun `band delta is negative below, zero inside, positive above`() {
+        val band = ComfortBand(18f, 22f)
+        assertEquals(-2f, bandDelta(band, 16f))
+        assertEquals(0f, bandDelta(band, 18f))
+        assertEquals(0f, bandDelta(band, 20f))
+        assertEquals(0f, bandDelta(band, 22f))
+        assertEquals(5f, bandDelta(band, 27f))
+    }
+
+    @Test
+    fun `alerts depend on the screen and drop what its body already shows`() {
+        val drive = activeAlerts(AlertContext.DRIVING, ClimateVerdict.HEAT_ALERT, setOf(SafetyFlag.BELT_UNBUCKLED, SafetyFlag.WINDOW_OPEN), MealNotice.WARN, BreakPhase.DUE, aboard = true, leavePrep = false)
+        assertEquals(listOf(AlertKind.HEAT, AlertKind.WINDOW_OPEN, AlertKind.BELT, AlertKind.MEAL, AlertKind.BREAK_DUE), drive.map { it.kind })
+        assertEquals(AlertLevel.DANGER, drive.first().level); assertEquals(AlertContext.DRIVING, drive.first().context)
+        // Leaving with the door open: the body shows heat/climate; belt, meal and break mean nothing now. Window/door stay.
+        val preExit = activeAlerts(AlertContext.PRE_EXIT, ClimateVerdict.HEAT_ALERT, setOf(SafetyFlag.WINDOW_OPEN, SafetyFlag.BELT_UNBUCKLED, SafetyFlag.DOOR_OPEN), MealNotice.WARN, BreakPhase.DUE, aboard = true, leavePrep = true)
+        assertEquals(listOf(AlertKind.WINDOW_OPEN, AlertKind.DOOR_OPEN), preExit.map { it.kind })
+        val alone = activeAlerts(AlertContext.PET_ALONE, ClimateVerdict.HVAC_OFF, setOf(SafetyFlag.DOOR_OPEN), MealNotice.WARN, BreakPhase.NONE, aboard = true, leavePrep = false)
+        assertEquals(listOf(AlertKind.DOOR_OPEN), alone.map { it.kind })
+        // Parked after boarding: the body already says "buckle the harness", so the slot shows the leave reminder, then the meal.
+        val parked = activeAlerts(AlertContext.PARKED, ClimateVerdict.OK, setOf(SafetyFlag.BELT_UNBUCKLED), MealNotice.WARN, BreakPhase.DUE, aboard = true, leavePrep = true)
+        assertEquals(listOf(AlertKind.LEAVE_PREP, AlertKind.MEAL), parked.map { it.kind })
+        // Leaving with the door open: the screen itself is the leave reminder.
+        val leaving = activeAlerts(AlertContext.PRE_EXIT, ClimateVerdict.OK, emptySet(), MealNotice.NONE, BreakPhase.NONE, aboard = true, leavePrep = true)
+        assertTrue(leaving.isEmpty())
+        // Climate off: caution inside the band, danger outside — and dangers always come first in the list.
+        val off = activeAlerts(AlertContext.PARKED, ClimateVerdict.OK, emptySet(), MealNotice.WARN, BreakPhase.NONE, aboard = true, leavePrep = false, hvacOff = true, hvacOffLevel = AlertLevel.CAUTION)
+        assertEquals(listOf(AlertKind.HVAC_OFF, AlertKind.MEAL), off.map { it.kind }); assertEquals(AlertLevel.CAUTION, off.first().level)
+        val offHot = activeAlerts(AlertContext.DRIVING, ClimateVerdict.TOO_HOT, setOf(SafetyFlag.BELT_UNBUCKLED), MealNotice.NONE, BreakPhase.NONE, aboard = true, leavePrep = false, hvacOff = true, hvacOffLevel = AlertLevel.DANGER)
+        assertEquals(listOf(AlertKind.HVAC_OFF, AlertKind.BELT), offHot.map { it.kind }); assertEquals(AlertLevel.DANGER, offHot.first().level)
+        // Nothing about a dog that is not on board.
+        assertTrue(activeAlerts(AlertContext.PARKED, ClimateVerdict.HEAT_ALERT, setOf(SafetyFlag.BELT_UNBUCKLED, SafetyFlag.DOOR_OPEN), MealNotice.NONE, BreakPhase.NONE, aboard = false, leavePrep = false).isEmpty())
+    }
+
+    @Test
+    fun `alert wording follows the screen it is read on`() {
+        assertEquals(R.string.alert_heat_driving, alertMessageRes(AlertKind.HEAT, AlertContext.DRIVING))
+        assertEquals(R.string.alert_heat_parked, alertMessageRes(AlertKind.HEAT, AlertContext.PARKED))
+        assertEquals(R.string.alert_heat_pre_exit, alertMessageRes(AlertKind.HEAT, AlertContext.PRE_EXIT))
+        assertEquals(R.string.alert_heat_pet_alone, alertMessageRes(AlertKind.HEAT, AlertContext.PET_ALONE))
+        assertEquals(R.string.alert_belt_parked, alertMessageRes(AlertKind.BELT, AlertContext.PARKED))
+        assertEquals(R.string.alert_belt_driving, alertMessageRes(AlertKind.BELT, AlertContext.DRIVING))
+    }
+
+    @Test
+    fun `pre-exit needs dog aboard, parked, driver door open and not yet alone`() {
+        assertTrue(isPreExit(aboard = true, moving = false, gearPark = true, driverDoorOpen = true, petAlone = false))
+        assertTrue(isPreExit(aboard = true, moving = false, gearPark = null, driverDoorOpen = true, petAlone = false))
+        assertFalse(isPreExit(aboard = true, moving = false, gearPark = true, driverDoorOpen = true, petAlone = true))
+        assertFalse(isPreExit(aboard = true, moving = true, gearPark = false, driverDoorOpen = true, petAlone = false))
+        assertFalse(isPreExit(aboard = false, moving = false, gearPark = true, driverDoorOpen = true, petAlone = false))
+        assertFalse(isPreExit(aboard = true, moving = false, gearPark = true, driverDoorOpen = false, petAlone = false))
+        assertEquals(AlertContext.PET_ALONE, alertContext(moving = false, preExit = true, petAlone = true))
+        assertEquals(AlertContext.PRE_EXIT, alertContext(moving = false, preExit = true, petAlone = false))
+    }
+
+    @Test
+    fun `trip end resets break, meal, boarding and alert state`() {
+        val s = CareState(
+            aboard = true, drivenSinceBreakSec = 5400, breakPhase = BreakPhase.DUE, mealNotice = MealNotice.WARN, heatAlert = true,
+            alerts = listOf(Alert(AlertKind.BELT, AlertLevel.CAUTION, AlertContext.DRIVING)), dismissedCautions = setOf(AlertKind.BELT),
+            data = com.dogfootprint.app.data.AppData(aboardDogId = "d", lastMealAt = 1L),
+        ).afterTripEnd()
+        assertEquals(0, s.drivenSinceBreakSec); assertEquals(BreakPhase.NONE, s.breakPhase)
+        assertEquals(MealNotice.NONE, s.mealNotice); assertFalse(s.heatAlert); assertFalse(s.aboard)
+        assertTrue(s.alerts.isEmpty()); assertTrue(s.dismissedCautions.isEmpty())
+        assertEquals(null, s.data.lastMealAt); assertEquals(null, s.data.aboardDogId)
+        assertEquals(null, s.trip)
+    }
+
+    @Test
+    fun `whole minutes round to the nearest minute`() {
+        assertEquals(90, wholeMinutes(5400)); assertEquals(15, wholeMinutes(899)); assertEquals(0, wholeMinutes(20))
+    }
+
+    @Test
+    fun `climate action follows the cause and aims at the band centre`() {
+        val band = ComfortBand(18f, 22f)
+        assertEquals(ClimateAction.TurnOn, climateAction(hvacPower = false, verdict = ClimateVerdict.OK, band = band))
+        assertEquals(ClimateAction.TurnOn, climateAction(hvacPower = false, verdict = ClimateVerdict.HEAT_ALERT, band = band))
+        assertEquals(ClimateAction.CoolTo(20), climateAction(hvacPower = true, verdict = ClimateVerdict.HEAT_ALERT, band = band))
+        assertEquals(ClimateAction.CoolTo(20), climateAction(hvacPower = true, verdict = ClimateVerdict.TOO_HOT, band = band))
+        assertEquals(ClimateAction.HeatTo(20), climateAction(hvacPower = true, verdict = ClimateVerdict.TOO_COLD, band = band))
+        assertEquals(null, climateAction(hvacPower = true, verdict = ClimateVerdict.OK, band = band))
+    }
+
+    @Test
+    fun `climate off is a caution inside the band and a danger outside or trending out`() {
+        val band = ComfortBand(18f, 22f)
+        assertEquals(AlertLevel.CAUTION, hvacOffLevel(20f, band, ratePerMin = 0f))
+        assertEquals(AlertLevel.CAUTION, hvacOffLevel(20f, band, ratePerMin = null))
+        assertEquals(AlertLevel.DANGER, hvacOffLevel(27f, band, ratePerMin = 0f))
+        assertEquals(AlertLevel.DANGER, hvacOffLevel(21f, band, ratePerMin = 0.3f))   // +3 °C in 10 min → 24 > 22
+        assertEquals(AlertLevel.CAUTION, hvacOffLevel(21f, band, ratePerMin = 0.05f))
+        assertEquals(AlertLevel.CAUTION, hvacOffLevel(null, band, ratePerMin = null))
     }
 }

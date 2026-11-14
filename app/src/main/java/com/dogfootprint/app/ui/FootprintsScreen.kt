@@ -32,20 +32,24 @@ import com.dogfootprint.app.ui.pleos.PleosListRow
 import com.dogfootprint.app.ui.pleos.PleosStatusLine
 import com.dogfootprint.app.ui.pleos.PleosType
 
+/** Same numbers as ComfortRules.comfortScore, so the detail can say why points were lost. */
+private val penalties = listOf(
+    EventType.BRAKE_BURST to 10, EventType.SPORT_MODE to 15, EventType.WINDOW_OPEN to 10, EventType.BELT_UNBUCKLED to 10, EventType.TEMP_OUT_OF_BAND to 5,
+)
+
 @Composable
-fun FootprintsScreen(state: CareState) {
+fun FootprintsScreen(state: CareState, initialTripId: String? = null) {
     val c = Pleos.colors
     val dog = state.dog
     val trips = state.dogTrips.sortedByDescending { it.startedAt }
     val weekAgo = System.currentTimeMillis() - 7L * 24 * 3600 * 1000
     val week = trips.filter { it.startedAt >= weekAgo }
-    var expanded by remember { mutableStateOf<String?>(null) }
+    var expanded by remember(initialTripId) { mutableStateOf(initialTripId) }
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = PleosDims.space40, vertical = PleosDims.space32)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = PleosDims.space40, vertical = PleosDims.space24)) {
         item {
             Text(stringResource(R.string.footprints_title, dog?.name ?: "—"), style = PleosType.titleLarge, color = c.textPrimary)
             Spacer(Modifier.height(PleosDims.space16))
-            // While driving only this summary is shown — it is the one thing worth a glance.
             Text(stringResource(R.string.footprints_week_fmt, week.size, week.sumOf { it.distanceKm.toDouble() }.toFloat()), style = PleosType.headlineSmall, color = c.textPrimary)
             Text(
                 stringResource(R.string.footprints_total_fmt, trips.size, state.totalKm, durationText(trips.sumOf { it.drivingSec })),
@@ -70,19 +74,30 @@ private fun TripRow(trip: Trip, expanded: Boolean, onClick: () -> Unit) {
     val counts = trip.events.groupingBy { it.type }.eachCount()
     PleosListRow(
         title = dateText(trip.startedAt) + (trip.destinationName?.let { "  →  $it" } ?: ""),
-        subtitle = stringResource(R.string.trip_line_fmt, trip.distanceKm, durationText(trip.drivingSec), trip.comfortScore) + "  ·  " +
-            stringResource(R.string.trip_reason_fmt, counts[EventType.BRAKE_BURST] ?: 0, counts[EventType.WINDOW_OPEN] ?: 0, counts[EventType.BELT_UNBUCKLED] ?: 0),
+        subtitle = stringResource(R.string.fp_summary_fmt, trip.distanceKm, durationText(trip.drivingSec), trip.breaks) + "  ·  " + stringResource(R.string.fp_score_fmt, trip.comfortScore) +
+            (trip.mood?.let { "  ·  " + stringResource(R.string.fp_mood_fmt, stringResource(it.labelRes)) } ?: ""),
         icon = trip.mood?.iconRes ?: R.drawable.ic_footprint,
         onClick = onClick,
         trailing = { PleosIcon(R.drawable.ic_chevron_right, c.textTertiary, size = PleosDims.iconSmall) },
     )
     if (expanded) {
         Column(Modifier.fillMaxWidth().padding(start = 72.dp, top = PleosDims.space16, bottom = PleosDims.space24)) {
-            trip.note?.let { Text(it, style = PleosType.bodyLarge, color = c.textPrimary, modifier = Modifier.padding(bottom = PleosDims.space16)) }
+            // Summary first: what happened, and why the score is what it is.
+            Text(stringResource(R.string.fp_summary_fmt, trip.distanceKm, durationText(trip.drivingSec), trip.breaks), style = PleosType.bodyLargeStrong, color = c.textPrimary)
+            val reasons = penalties.mapNotNull { (t, p) -> counts[t]?.takeIf { it > 0 }?.let { n -> stringResource(R.string.fp_penalty_fmt, stringResource(t.labelRes), n, n * p) } }
+            Text(
+                stringResource(R.string.fp_score_fmt, trip.comfortScore) + " — " + (reasons.takeIf { it.isNotEmpty() }?.joinToString(" · ") ?: stringResource(R.string.fp_score_perfect)),
+                style = PleosType.bodyMedium, color = c.textSecondary, modifier = Modifier.padding(top = PleosDims.space4),
+            )
+            trip.note?.let { Text(it, style = PleosType.bodyMedium, color = c.textSecondary, modifier = Modifier.padding(top = PleosDims.space8)) }
+            Spacer(Modifier.height(PleosDims.space16))
             trip.events.forEach { e ->
-                Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(timeText(e.at), style = PleosType.bodyMedium, color = c.textTertiary, modifier = Modifier.width(140.dp))
-                    Text(stringResource(e.type.labelRes) + (e.detail?.let { " · $it" } ?: ""), style = PleosType.bodyMedium, color = c.textSecondary)
+                val tint = if (e.type.isDanger) c.negative else if (e.type == EventType.BELT_UNBUCKLED) c.accent else c.textSecondary
+                Row(Modifier.padding(vertical = PleosDims.space8), verticalAlignment = Alignment.CenterVertically) {
+                    PleosIcon(e.type.iconRes, tint, size = PleosDims.iconSmall)
+                    Spacer(Modifier.width(PleosDims.space16))
+                    Text(timeText(e.at), style = PleosType.bodyMedium, color = c.textTertiary, modifier = Modifier.width(150.dp))
+                    Text(stringResource(e.type.labelRes) + (e.detail?.let { " · $it" } ?: ""), style = PleosType.bodyLarge, color = if (e.type.isDanger) c.negative else c.textPrimary)
                 }
             }
         }

@@ -17,3 +17,9 @@
 
 # Pleos Playground credentials (PROJECT_ID, CLIENT_ID, CLIENT_SECRET, CRN)
 .env
+
+# Figma reader deps (scripts/pleos-tokens/README.md)
+scripts/pleos-tokens/node_modules/
+scripts/pleos-tokens/package.json
+scripts/pleos-tokens/package-lock.json
+scripts/pleos-tokens/*.json

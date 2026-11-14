@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -17,35 +18,48 @@ import androidx.compose.ui.res.stringResource
 import com.dogfootprint.app.BuildConfig
 import com.dogfootprint.app.R
 import com.dogfootprint.app.care.CareState
+import com.dogfootprint.app.care.DemoClimate
 import com.dogfootprint.app.data.CalmMode
-import com.dogfootprint.app.ui.pleos.PleosToggleButton
-import androidx.compose.foundation.layout.Row
 import com.dogfootprint.app.pleos.SdkStatus
 import com.dogfootprint.app.ui.pleos.ButtonSize
 import com.dogfootprint.app.ui.pleos.Pleos
 import com.dogfootprint.app.ui.pleos.PleosButton
 import com.dogfootprint.app.ui.pleos.PleosDims
 import com.dogfootprint.app.ui.pleos.PleosListRow
+import com.dogfootprint.app.ui.pleos.PleosStatusLine
 import com.dogfootprint.app.ui.pleos.PleosSwitch
+import com.dogfootprint.app.ui.pleos.PleosToggleButton
 import com.dogfootprint.app.ui.pleos.PleosType
 
+/**
+ * Parked: everything. Driving: only the two toggles a driver may need (voice, calm mode) with their
+ * explanations dropped; the experimental control flag, developer triggers, SDK status and about text
+ * come back when parked. Debug builds keep the developer triggers while driving for scripted recordings.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(vm: CareViewModel, state: CareState) {
     val c = Pleos.colors
     val settings = state.data.settings
     val d = state.diagnostics
+    val driving = state.moving
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PleosDims.space40, vertical = PleosDims.space32)) {
         Text(stringResource(R.string.settings_title), style = PleosType.titleLarge, color = c.textPrimary)
         Spacer(Modifier.height(PleosDims.space24))
 
-        PleosListRow(stringResource(R.string.settings_control), subtitle = stringResource(R.string.settings_control_body), icon = R.drawable.ic_mode_fan) {
-            PleosSwitch(settings.controlEnabled, { on -> vm.updateSettings { it.copy(controlEnabled = on) } })
+        if (driving) {
+            PleosStatusLine(R.drawable.ic_lock, stringResource(R.string.settings_driving_locked), tint = c.textTertiary, modifier = Modifier.padding(bottom = PleosDims.space16))
+        } else {
+            // Internal status ("not yet approved", "emulator demo") is for the team, not the product screen.
+            val controlBody = stringResource(R.string.settings_control_body_short) + if (BuildConfig.DEBUG) " " + stringResource(R.string.settings_control_debug_note) else ""
+            PleosListRow(stringResource(R.string.settings_control), subtitle = controlBody, icon = R.drawable.ic_mode_fan) {
+                PleosSwitch(settings.controlEnabled, { on -> vm.updateSettings { it.copy(controlEnabled = on) } })
+            }
         }
-        PleosListRow(stringResource(R.string.settings_tts), subtitle = stringResource(R.string.settings_tts_body), icon = R.drawable.ic_volume_up) {
+        PleosListRow(stringResource(R.string.settings_tts), subtitle = if (driving) null else stringResource(R.string.settings_tts_body), icon = R.drawable.ic_volume_up) {
             PleosSwitch(settings.pleosTts, { on -> vm.updateSettings { it.copy(pleosTts = on) } })
         }
-        PleosListRow(stringResource(R.string.calm_mode), subtitle = stringResource(R.string.calm_evidence), icon = R.drawable.ic_graphic_eq, divider = false) {
+        PleosListRow(stringResource(R.string.calm_mode), subtitle = if (driving) null else stringResource(R.string.settings_calm_body), icon = R.drawable.ic_graphic_eq, divider = false) {
             Row(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
                 CalmMode.entries.forEach { m ->
                     PleosToggleButton(
@@ -56,32 +70,42 @@ fun SettingsScreen(vm: CareViewModel, state: CareState) {
             }
         }
 
-        run {
+        // Developer triggers and SDK diagnostics: debug builds only, parked or not (review §5).
+        if (BuildConfig.DEBUG) {
             Spacer(Modifier.height(PleosDims.space40))
             Text(stringResource(R.string.settings_developer), style = PleosType.titleSmall, color = c.textPrimary)
-            Text(stringResource(R.string.settings_demo_body), style = PleosType.bodyMedium, color = c.textTertiary, modifier = Modifier.padding(top = PleosDims.space4, bottom = PleosDims.space16))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12), verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+            if (!driving) Text(stringResource(R.string.settings_demo_body), style = PleosType.bodyMedium, color = c.textTertiary, modifier = Modifier.padding(top = PleosDims.space4))
+            FlowRow(Modifier.padding(top = PleosDims.space16), horizontalArrangement = Arrangement.spacedBy(PleosDims.space12), verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
                 PleosButton(stringResource(R.string.demo_brake), onClick = vm::demoBrakeBurst, size = ButtonSize.Small, primary = false)
                 PleosButton(stringResource(R.string.demo_break), onClick = vm::demoBreakDue, size = ButtonSize.Small, primary = false)
-                PleosButton(stringResource(R.string.demo_temp_hot), onClick = { vm.demoTemp(27f) }, size = ButtonSize.Small, primary = false)
-                PleosButton(stringResource(R.string.demo_temp_cold), onClick = { vm.demoTemp(16f) }, size = ButtonSize.Small, primary = false)
-                PleosButton(stringResource(R.string.demo_temp_clear), onClick = { vm.demoTemp(null) }, size = ButtonSize.Small, primary = false, enabled = state.demoTemp != null)
+                // Each scenario sets measured + set-point + power together so the Home line stays consistent (review item H).
+                PleosButton(stringResource(R.string.demo_temp_cold), onClick = { vm.demoClimate(DemoClimate(zoneTemp = 16f, targetTemp = 18f, hvacPower = true)) }, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_temp_hot), onClick = { vm.demoClimate(DemoClimate(zoneTemp = 27f, targetTemp = 24f, hvacPower = true)) }, size = ButtonSize.Small, primary = false)
                 PleosButton(stringResource(R.string.demo_pet_alone), onClick = vm::demoPetAlone, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_pet_alone_risk), onClick = vm::demoPetAloneRisk, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_temp_clear), onClick = { vm.demoClimate(null) }, size = ButtonSize.Small, primary = false, enabled = state.demoClimate != null)
             }
         }
 
-        Spacer(Modifier.height(PleosDims.space40))
-        Text(stringResource(R.string.settings_sdk_status), style = PleosType.titleSmall, color = c.textPrimary, modifier = Modifier.padding(bottom = PleosDims.space8))
-        StatusRow(stringResource(R.string.sdk_vehicle), d.vehicle, d.vehicleDetail)
-        StatusRow(stringResource(R.string.sdk_navi), d.navi, state.navi.lastError)
-        StatusRow(stringResource(R.string.sdk_tts), d.tts, d.ttsDetail)
-        StatusRow(stringResource(R.string.sdk_location), d.location, null, divider = false)
-        Text(
-            stringResource(R.string.settings_about, BuildConfig.PLEOS_VEHICLE_SDK, BuildConfig.PLEOS_NAVI_SDK, BuildConfig.PLEOS_TTS_SDK),
-            style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space16),
-        )
-        Text(stringResource(R.string.voice_hint), style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space8))
-
+        if (!driving && BuildConfig.DEBUG) {
+            Spacer(Modifier.height(PleosDims.space40))
+            Text(stringResource(R.string.settings_sdk_status), style = PleosType.titleSmall, color = c.textPrimary, modifier = Modifier.padding(bottom = PleosDims.space8))
+            StatusRow(stringResource(R.string.sdk_vehicle), d.vehicle, d.vehicleDetail)
+            StatusRow(stringResource(R.string.sdk_navi), d.navi, state.navi.lastError)
+            StatusRow(stringResource(R.string.sdk_tts), d.tts, d.ttsDetail)
+            StatusRow(stringResource(R.string.sdk_location), d.location, null, divider = false)
+            Text(
+                stringResource(R.string.settings_about, BuildConfig.PLEOS_VEHICLE_SDK, BuildConfig.PLEOS_NAVI_SDK, BuildConfig.PLEOS_TTS_SDK),
+                style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space16),
+            )
+            Text(stringResource(R.string.voice_hint), style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space8))
+        }
+        if (!driving && !BuildConfig.DEBUG) {
+            Text(
+                stringResource(R.string.settings_about, BuildConfig.PLEOS_VEHICLE_SDK, BuildConfig.PLEOS_NAVI_SDK, BuildConfig.PLEOS_TTS_SDK),
+                style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space40),
+            )
+        }
     }
 }
 

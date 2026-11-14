@@ -130,6 +130,10 @@ object PleosDims {
     /** table Contents=Body row = 112 px; Title row = 100 px */
     val listRow = 112.dp
     val windowPadding = 20.dp
+    /** ivi_gnb/vertical 140×1440 and gnb_button/standard 124×124 (display guide, Form factors & Display). */
+    val gnbVerticalWidth = 140.dp; val gnbButton = 124.dp
+    /** Layout breakpoint (ours): below this the app is in a half-width window and stacks to one column. */
+    val compactMaxWidth = 1200.dp
     val dividerWidth = 1.dp
 
     val radiusLarge = RoundedCornerShape(32.dp)   // radius level9 — large button / utility panels

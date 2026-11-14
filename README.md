@@ -20,8 +20,8 @@ Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md). Evi
    adb install -r apk/dog-footprint_dog-footprint_release.apk
    ```
 3. Open **dog-footprint** from the launcher. Allow the location permission prompt on first launch.
-4. Create a dog profile (프로필 → 이름 + 견종 + 자리 → 저장), then on 홈 turn on **탑승**. The trip starts
-   automatically when the vehicle moves.
+4. Create a dog profile (프로필 → 이름 + 견종 + 자리 → 저장), then on 홈 press **코코 태우기**. The trip starts
+   automatically when the vehicle moves and ends when you press **내리기** (or confirm after 10 min parked).
 5. To simulate vehicle signals, use the Pleos **Virtual Console**: `adb forward tcp:8088 tcp:8088` then open
    http://127.0.0.1:8088/ — or script it with `scripts/vehicle-sim.sh` (see *Demo* below).
 
@@ -45,7 +45,9 @@ Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md). Evi
 | Safety checks: window open, harness unbuckled, door open, sport mode, hard-brake bursts | seat occupancy/belt, window & door position, drive mode, brake pedal | Vehicle |
 | Spoken guidance (Korean) with chime fallback | Pleos TTS, registered with the team's Client ID/Secret | TextToSpeech |
 | Calming mode | CC0 calm classical (Open Goldberg Variations, three pieces rotated) or a TTS-read story; brown noise dropped for lack of canine evidence | TextToSpeech (story) |
-| Footprints: per-trip distance, time, breaks, events, comfort score, mood | local DataStore | FusedLocation for coordinates |
+| Footprints: per-trip distance, time, breaks, event timeline with icons, comfort score with the reasons for each deduction, mood | local DataStore | FusedLocation for coordinates |
+| Five Home screens (parked · driving · leaving with the driver's door open · pet alone · trip-end check-in) with a fixed warning slot (danger / caution / notice, wording per screen) | state-specific composables, `activeAlerts` + `AlertTexts` | Vehicle: driver door, passenger occupancy, power-down warning |
+| Leaving flow: reminder at the P shift, "코코를 두고 내리시나요?" when the door opens, "공조 켜기" (control builds) or utility-mode guidance (release), pet-alone record with time alone and peak temperature | `CareEngine` leaving stages, `keepClimate` | Vehicle Control (not yet approved) |
 
 ---
 

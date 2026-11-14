@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>dog-footprint 기능 지도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one 1040px column; the Pleos Hyundai dark theme is the primary look (same tokens as ui/pleos/PleosTokens.kt), light mirrors it. */
+:root {
+  --bg: #1D1E21; --surface: #131417; --surface-high: #313236;
+  --fg: #FFFFFF; --fg-2: rgba(255,255,255,.84); --fg-3: rgba(255,255,255,.64); --fg-4: rgba(255,255,255,.32);
+  --line: rgba(255,255,255,.2); --accent: #0082FF; --negative: #FF4C28; --active: #00E074;
+  --accent-ink: #FFFFFF;
+  --display: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+  --body: "Noto Sans KR", "Apple SD Gothic Neo", "Pretendard", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F7F8FA; --surface: #FFFFFF; --surface-high: #EDEEF2;
+    --fg: #131417; --fg-2: rgba(19,20,23,.84); --fg-3: rgba(19,20,23,.64); --fg-4: rgba(19,20,23,.32);
+    --line: rgba(19,20,23,.2); --accent: #0064FF; --negative: #FE3D16; --active: #02C265;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F7F8FA; --surface: #FFFFFF; --surface-high: #EDEEF2;
+  --fg: #131417; --fg-2: rgba(19,20,23,.84); --fg-3: rgba(19,20,23,.64); --fg-4: rgba(19,20,23,.32);
+  --line: rgba(19,20,23,.2); --accent: #0064FF; --negative: #FE3D16; --active: #02C265;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 0 96px; padding-inline: 20px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 700; line-height: 1.15; letter-spacing: -.01em; }
+h2 { font-size: 26px; font-weight: 600; line-height: 1.25; }
+h3 { font-size: 18px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); text-decoration: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, pre { font-family: var(--mono); font-size: 13.5px; }
+code { background: var(--surface-high); padding: 1px 6px; border-radius: 4px; }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0; line-height: 1.55; }
+pre code { background: none; padding: 0; }
+.eyebrow { font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3); }
+
+/* header */
+.hero { padding-block: 56px 32px; border-bottom: 1px solid var(--line); display: grid; gap: 20px; }
+.hero p.lead { font-size: 18px; color: var(--fg-2); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 20px; color: var(--fg-3); font-size: 14px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 12px; }
+.stat { background: var(--surface); padding: 14px 16px; min-width: 0; }
+.stat b { display: block; font-family: var(--display); font-size: 30px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 13px; color: var(--fg-3); }
+
+/* nav */
+nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); margin-inline: -20px; padding-inline: 20px; }
+nav.toc ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 4px; overflow-x: auto; }
+nav.toc a { display: block; padding: 12px 12px; font-family: var(--display); font-size: 14px; font-weight: 500; color: var(--fg-2); white-space: nowrap; border-bottom: 2px solid transparent; }
+nav.toc a:hover { color: var(--fg); text-decoration: none; border-bottom-color: var(--accent); }
+
+section { padding-block: 48px 8px; display: grid; gap: 20px; }
+section > header { display: grid; gap: 8px; }
+section > header p { color: var(--fg-3); }
+
+/* flow */
+.flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch; }
+.flow .box { background: var(--surface); border: 1px solid var(--line); padding: 18px 18px 16px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.flow .box h3 { font-size: 15px; color: var(--fg-3); font-weight: 600; letter-spacing: .04em; }
+.flow .box ul { margin: 0; padding-left: 18px; color: var(--fg-2); font-size: 15px; display: grid; gap: 4px; }
+.flow .arrow { align-self: center; color: var(--fg-4); font-family: var(--display); font-size: 24px; }
+.flow .box.rules { border-color: var(--accent); }
+@media (max-width: 720px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); justify-self: center; } }
+
+/* feature blocks */
+.feature { display: grid; grid-template-columns: 240px 1fr; gap: 24px; padding-block: 24px; border-top: 1px solid var(--line); }
+.feature:first-of-type { border-top: 0; }
+.feature .side { display: grid; gap: 8px; align-content: start; }
+.feature .side .num { font-family: var(--mono); font-size: 12px; color: var(--fg-4); }
+.feature .side p { font-size: 14px; color: var(--fg-3); }
+.feature .main { min-width: 0; display: grid; gap: 14px; }
+@media (max-width: 720px) { .feature { grid-template-columns: 1fr; gap: 12px; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--display); font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg-2); }
+.chip.demo { border-color: var(--accent); color: var(--accent); }
+.chip.flag { border-color: var(--fg-4); color: var(--fg-3); border-style: dashed; }
+.chip.live { border-color: var(--active); color: var(--active); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.tablewrap { overflow-x: auto; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); }
+th { font-family: var(--display); font-weight: 600; font-size: 13px; color: var(--fg-3); letter-spacing: .02em; }
+td:first-child { font-weight: 500; white-space: nowrap; }
+td.src { color: var(--fg-3); font-size: 13.5px; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+tr.na td { color: var(--fg-3); }
+.ok { color: var(--active); } .warn { color: var(--negative); }
+
+/* voice line list */
+.voice { columns: 2; column-gap: 32px; font-size: 14px; color: var(--fg-2); }
+.voice li { break-inside: avoid; margin-bottom: 4px; }
+@media (max-width: 720px) { .voice { columns: 1; } }
+
+/* demo timeline */
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { display: grid; grid-template-columns: 64px 1fr; gap: 16px; padding-block: 10px; border-bottom: 1px solid var(--line); }
+.timeline .t { font-family: var(--mono); font-size: 13px; color: var(--fg-3); font-variant-numeric: tabular-nums; padding-top: 3px; }
+.timeline .what { display: grid; gap: 2px; min-width: 0; }
+.timeline .what b { font-weight: 600; }
+.timeline .what span { color: var(--fg-3); font-size: 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 720px) { .two { grid-template-columns: 1fr; } }
+.two ul { margin: 0; padding-left: 18px; color: var(--fg-2); font-size: 14.5px; display: grid; gap: 4px; }
+
+/* how-to */
+.path { border: 1px solid var(--line); background: var(--surface); padding: 20px; display: grid; gap: 12px; }
+.path.rec { border-color: var(--accent); }
+.path ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--fg-2); font-size: 15px; }
+.path ol li { padding-left: 2px; }
+.note { border-left: 3px solid var(--negative); padding: 6px 14px; color: var(--fg-2); font-size: 14.5px; background: var(--surface); }
+.note.info { border-left-color: var(--accent); }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--fg-3); font-size: 14px; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="eyebrow">dog-footprint · Pleos Connect · 현대자동차그룹 차량용 앱 개발 공모전</span>
+  <h1>반려견 자리의 온도 한 숫자, 판정 한 단어</h1>
+  <p class="lead">견종·나이·체형을 등록하면 차량의 좌석별 실내 온도·창문·문·안전벨트·주행 신호를 읽어 그 개에게 맞는 온도, 휴식, 안전을 안내하고, 모든 드라이브를 발자국으로 남기는 Android Automotive 앱입니다.</p>
+  <div class="meta">
+    <span>팀 dog-footprint</span><span>기준 커밋 <code>ffddd8f</code> · 2026-11-14</span><span>Kotlin · Jetpack Compose · Pleos Connect SDK</span>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>4</b><span>화면 (지금 · 발자국 · 프로필 · 설정)</span></div>
+    <div class="stat"><b>4</b><span>홈 화면 (정차 · 주행 · 펫 단독 · 종료 체크인)</span></div>
+    <div class="stat"><b>5</b><span>Pleos SDK 연동 (4개 사용 중)</span></div>
+    <div class="stat"><b>17</b><span>음성 안내 문장 (Pleos TTS)</span></div>
+    <div class="stat"><b>12</b><span>프로필 입력 항목</span></div>
+    <div class="stat"><b>13</b><span>단위 테스트 (ComfortRules)</span></div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="목차"><ul>
+  <li><a href="#flow">동작 원리</a></li>
+  <li><a href="#features">기능</a></li>
+  <li><a href="#sdk">SDK 사용 현황</a></li>
+  <li><a href="#demo">데모 영상</a></li>
+  <li><a href="#tryout">직접 조작해 보려면</a></li>
+</ul></nav>
+
+<section id="flow">
+  <header>
+    <h2>동작 원리</h2>
+    <p>입력 두 갈래(개 프로필, 차량 신호)가 순수 함수 규칙을 거쳐 화면·음성·차량 제어·기록으로 나갑니다. 규칙의 모든 상수는 <code>docs/CARE_RULES.md</code>의 출처 표에 묶여 있습니다.</p>
+  </header>
+  <div class="flow">
+    <div class="box">
+      <h3>입력</h3>
+      <ul>
+        <li><b>프로필</b> 견종 · 크기 · 털 · 단두종 · 생년월 · 체형 · 호흡기/심장 · 멀미 · 몸무게 · 자리 · 고정 방식</li>
+        <li><b>탑승 시</b> 마지막 식사 시간</li>
+        <li><b>차량</b> 자리별 실내 온도 · 공조 설정/풍량/전원 · 좌석 점유/벨트 · 창문 · 문/트렁크 · 브레이크 · 기어 · 주행거리 · 배터리</li>
+        <li><b>내비</b> 목적지 남은 거리/시간 · 휴게소 안내</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box rules">
+      <h3>규칙 (care/ComfortRules.kt)</h3>
+      <ul>
+        <li>생애 단계 (AAHA, 크기별 노령 기준)</li>
+        <li>적정 온도 범위 18–24 °C에서 특성별 보정, 10–29.5 °C 절대 한계</li>
+        <li>열사병 경보 (단두종·호흡기 24 °C, 그 외 27 °C)</li>
+        <li>휴식 간격 120/90분, 멀미·더위 단축, 하한 45분</li>
+        <li>식후 2시간 경고, 4시간 참고</li>
+        <li>급제동 묶음 감지, 이동/정차 판정, 편안함 지수</li>
+      </ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box">
+      <h3>출력</h3>
+      <ul>
+        <li><b>화면</b> 상태별 홈 4종, 온도 정수 + 판정 한 단어, 고정 경고 슬롯(위험·주의·정보)</li>
+        <li><b>음성</b> Pleos TTS 17문장 (끄면 알림음)</li>
+        <li><b>차량 제어</b> 자동 조절 (실험 플래그): 공조 온도·풍량·방향</li>
+        <li><b>진정 모드</b> 음악 / 이야기</li>
+        <li><b>발자국</b> 여행별 거리·시간·휴식·이벤트·지수·기분</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <header>
+    <h2>기능</h2>
+    <p>표식: <span class="chip demo">데모 영상</span> 영상에 등장 · <span class="chip flag">실험 플래그</span> 설정에서 켜야 동작 · <span class="chip live">에뮬레이터 검증</span> Pleos Connect v2.1.0 에뮬레이터에서 확인됨</p>
+  </header>
+
+  <article class="feature">
+    <div class="side"><span class="num">01</span><h3>반려견 프로필</h3><p>한 번 입력하면 온도 범위와 휴식 간격이 그 개에 맞게 정해집니다. 25개 견종 프리셋이 크기·털·단두종 기본값을 채웁니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>입력</th><th>규칙에 미치는 영향</th><th>근거</th></tr>
+      <tr><td>견종 → 단두종</td><td>온도 상한 21 °C, 열사병 경보 24 °C부터</td><td class="src">Hall 2020 VetCompass OR 2.10 · Carter 2020</td></tr>
+      <tr><td>견종 → 이중모 / 대형·초대형</td><td>온도 상한 22 °C</td><td class="src">Hall 2020 (골든 vs 래브라도 OR 2.67)</td></tr>
+      <tr><td>단모 · 무모 · 초소형</td><td>온도 하한 20 °C</td><td class="src">USDA APHIS 10 °C 하한, 취약군 가중</td></tr>
+      <tr><td>생년월 → 생애 단계</td><td>강아지(&lt;9개월)·노령: 범위 양쪽 1 °C 축소, 휴식 90분</td><td class="src">AAHA 2019/2023 (노령 10/9/7/6년, 크기별)</td></tr>
+      <tr><td>체형 과체중</td><td>상한 −1 °C</td><td class="src">Hall 2020 OR 1.42</td></tr>
+      <tr><td>몸무게 ≥ 50 kg</td><td>상한 −1 °C</td><td class="src">Hall 2020 OR 3.42</td></tr>
+      <tr><td>호흡기·심장 질환</td><td>상한 −1 °C, 열사병 경보 24 °C부터</td><td class="src">Hall 2020b (환경성 열사병 최고 위험군)</td></tr>
+      <tr><td>멀미 가끔/자주</td><td>휴식 간격 −30/−60분, 식후 4시간 참고 알림</td><td class="src">ASPCA · Today's Veterinary Nurse</td></tr>
+      <tr><td>자리 (뒷좌석 좌/중/우, 조수석, 트렁크)</td><td>온도·창문·문·벨트를 읽을 차량 영역 결정</td><td class="src">Vehicle SDK capability 매핑</td></tr>
+      <tr><td>고정 방식 없음</td><td>탑승 중 상시 경고줄</td><td class="src">도로교통법 §39(5) · UK Highway Code 57</td></tr>
+    </table></div>
+    <p>편집 화면 하단에 계산된 생애 단계, 더위 취약 조건, 적정 온도 범위와 휴식 간격이 바로 표시됩니다. 한국어 기본, 영어 폴백.</p></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">02</span><h3>온도 케어</h3><p>홈의 중심. 개가 앉은 자리의 실측 온도를 적정 범위와 비교해 판정합니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip flag">실험 플래그 (자동 조절)</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>기능</th><th>동작</th><th>신호 / SDK</th></tr>
+      <tr><td>자리별 실측 온도</td><td>개의 자리를 포함하는 공조 영역을 capability API로 찾고, 없으면 앞좌석 값에 "(앞좌석 기준)" 표기</td><td class="src">Vehicle: HVAC temperature current</td></tr>
+      <tr><td>판정 한 단어</td><td>괜찮아요 / 추워요 / 더워요 / 열사병 위험 — 아이콘 + 글자, 위치 고정</td><td class="src">ComfortRules.climatePlan</td></tr>
+      <tr><td>권고 문장 + 음성</td><td>"코코에게 추워요. 19도로 올려 주세요." — 60초 이상 벗어나면 1회, 10분 쿨다운</td><td class="src">Pleos TTS</td></tr>
+      <tr><td>공조 꺼짐 감지</td><td>공조 전원 꺼짐 → 주의(범위 안) 또는 위험(범위 밖·추세) 경고 + 음성</td><td class="src">Vehicle: HVAC power</td></tr>
+      <tr><td>열사병 경보</td><td>냉방 강화 + 15분 내 휴식 안내, 휴식 간격 60분으로 단축</td><td class="src">Bruchim 2006 · Hall 2020</td></tr>
+      <tr><td>공조 꺼짐 단계</td><td>실내가 적정 범위 안이고 2분 추세로 10분 안에 벗어나지 않으면 주의, 범위 밖이거나 벗어날 추세면 위험</td><td class="src">ComfortRules.hvacOffLevel</td></tr>
+      <tr><td>자동 조절</td><td>설정 온도를 범위 안쪽으로, 풍량 +1, 송풍 방향(바닥/얼굴). 플래그 꺼짐 시 "Pleos 승인 후 제공" 안내만</td><td class="src">Vehicle Control: setHvacTemperature / FanSpeed / FanDirection</td></tr>
+    </table></div></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">03</span><h3>휴식 안내</h3><p>주행 시간을 누적해 개별 간격에 맞춰 쉬라고 알립니다.</p><div class="chips"><span class="chip demo">데모 영상 (시뮬레이션)</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>기능</th><th>동작</th><th>신호 / SDK</th></tr>
+      <tr><td>휴식 간격</td><td>성견 120분, 강아지·노령 90분, 멀미 −30/−60, 열사병 경보 시 ≤60, 하한 45</td><td class="src">주행거리 변화로 누적한 주행 시간</td></tr>
+      <tr><td>예고 → 도달</td><td>15분 전 "n분 뒤 휴식 시간이에요", 도달 시 "쉴 시간이에요. 안전한 곳에 멈춰 주세요" + 휴식 완료 버튼</td><td class="src">Pleos TTS</td></tr>
+      <tr><td>자동 휴식 인식</td><td>5분 이상 정차 + 개 자리 문이 열렸으면 휴식으로 기록하고 타이머 초기화</td><td class="src">Vehicle: gear, door position</td></tr>
+      <tr><td>휴게소 제안</td><td>경로 안내 중 앞에 휴게소가 있고 휴식 시간이 가까우면 "n km 앞 휴게소에서 쉬어가요"; 목적지가 코앞이면 생략</td><td class="src">NaviHelper: TBT, DestinationInfo</td></tr>
+      <tr><td>목적지 정보</td><td>남은 시간·거리를 휴식 카운트다운 옆에 표시</td><td class="src">NaviHelper</td></tr>
+    </table></div></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">04</span><h3>안전 체크</h3><p>차량 신호만으로 잡을 수 있는 위험을 아이콘 + 글자 한 줄로 알립니다.</p><div class="chips"><span class="chip demo">데모 영상 (창문·급제동·하네스)</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>체크</th><th>조건</th><th>신호</th></tr>
+      <tr><td>창문 많이 열림</td><td>주행 중 개 자리 창문이 30 % 넘게 열림 (20 % 아래로 닫히면 해제)</td><td class="src">Vehicle: window position</td></tr>
+      <tr><td>하네스 미착용</td><td>탑승 중인데 자리 벨트가 안 채워짐</td><td class="src">Vehicle: seat belt buckled, occupancy</td></tr>
+      <tr><td>문 열림</td><td>정차 중 개 자리 문(트렁크 포함)이 열림</td><td class="src">Vehicle: door position</td></tr>
+      <tr><td>급제동 반복</td><td>10초 안에 브레이크 4회 이상 → 스트레스 이벤트, 지수 −10 (60초 쿨다운)</td><td class="src">Vehicle: brake pedal</td></tr>
+      <tr><td>스포츠 모드</td><td>여행당 1회 "노멀 모드가 편해요"</td><td class="src">Vehicle: driving mode (에뮬레이터 미지원)</td></tr>
+      <tr><td>고정 방식 없음</td><td>프로필이 "없음"이면 탑승 중 상시 경고</td><td class="src">프로필</td></tr>
+      <tr><td>편안함 지수</td><td>100에서 급제동 10 · 스포츠 15 · 창문 10 · 하네스 10 · 온도 이탈 5씩 감점</td><td class="src">ComfortRules.comfortScore</td></tr>
+    </table></div></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">05</span><h3>탑승과 여행</h3><p>버튼 하나로 시작하고, 나머지는 차량 신호가 알아서 기록합니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>단계</th><th>동작</th><th>신호</th></tr>
+      <tr><td>태우기</td><td>정차 중 "코코 태우기" 한 버튼 → "마지막 식사는 언제였나요?" 팝업 (방금 / 1시간 / 2시간 / 3시간 이상 / 모름). 2시간 안이면 주의 단계 경고 + 음성. 내릴 때는 "내리기"</td><td class="src">ASPCA 3–4시간 전 가벼운 식사</td></tr>
+      <tr><td>자동 출발</td><td>기어가 P가 아니고 주행거리가 늘면 여행 시작, "코코와 출발해요"</td><td class="src">Vehicle: gear, odometer</td></tr>
+      <tr><td>이동/정차 판정</td><td>속도 API가 없어 기어 + 10초 주행거리 변화로 판정, 60초 변화 없으면 정차</td><td class="src">Vehicle</td></tr>
+      <tr><td>주행 중 화면 규칙</td><td>온도(정수) 하나 · 상태 한 줄(분 단위 휴식) · 경고 슬롯 하나 · 버튼 최대 둘. 초 단위 숫자·통계·프로필 설명 없음</td><td class="src">Pleos 주행 안전 가이드</td></tr>
+      <tr><td>하차 확인</td><td>10분 이상 정차하면 "하차했나요?" 팝업</td><td class="src">Vehicle: gear</td></tr>
+      <tr><td>여행 종료</td><td>"내리기" 또는 10분 정차 확인 → 홈에 요약 카드(거리 · 시간 · 휴식 · 편안함) + 기분 한 번 탭 저장(좋았어요 / 보통이에요 / 힘들었어요), 메모는 정차 중 보조 버튼. 휴식·식사·탑승 상태는 모두 초기화</td><td class="src">—</td></tr>
+      <tr><td>저장 항목</td><td>거리 · 시간 · 휴식 횟수 · 배터리 사용 · 출발/도착 좌표 · 이벤트 타임라인 · 편안함 지수 · 기분</td><td class="src">Vehicle: EV SoC · FusedLocation</td></tr>
+    </table></div></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">06</span><h3>주차 · 펫 단독</h3><p>홈의 세 번째 상태. 운전자가 내리고 개만 남은 순간을 잡습니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><p>탑승 중 정차 상태에서 운전석 문이 열렸다 닫히면 "펫 단독" 상태로 바뀌어 혼자 남은 시간, 자리 온도, 공조 전원을 크게 보여 주고 "코코 혼자 있어요. 공조가 꺼져 있어요 / 실내 n도예요"를 음성으로 알립니다. 차량이 꺼지면 앱도 꺼지므로 원격 감시가 아니라 "내리기 직전·직후의 확인"이라는 한계를 화면에 그대로 둡니다. 근거: 외기 21 °C에서 10분 만에 실내 32 °C (McLaren 2005), 창문을 조금 열어도 효과 없음.</p></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">07</span><h3>진정 모드</h3><p>켄넬 연구에 근거한 두 가지. 저주파 노이즈는 개 대상 근거가 없고 청력 하한(~67 Hz) 근처라 제외했습니다.</p><div class="chips"><span class="chip demo">데모 영상 (음악)</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>모드</th><th>동작</th><th>근거</th></tr>
+      <tr><td>잔잔한 음악</td><td>Open Goldberg Variations (CC0) 세 곡을 매번 다른 순서로 순환, −20 LUFS 정규화, 기본 볼륨 낮음, 오디오 포커스 처리</td><td class="src">Bowman 2015/2017 (같은 곡 7일 반복 시 습관화 → 순환) · Kogan 2012</td></tr>
+      <tr><td>이야기 듣기</td><td>차량 음성이 개 이름을 넣어 짧은 이야기 8줄을 반복 낭독. TTS가 꺼져 있거나 연결 안 되면 음악으로 대체</td><td class="src">Brayley &amp; Montrose 2016 (오디오북 &gt; 음악 &gt; 무음)</td></tr>
+    </table></div></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">08</span><h3>음성 안내</h3><p>Pleos TTS(팀 Client ID/Secret로 등록)로 말하고, 끄거나 실패하면 알림음 + 상단 알림줄로 대체합니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><ul class="voice">
+      <li>"코코에게 더워요. 22도로 낮춰 주세요."</li><li>"코코에게 추워요. 19도로 올려 주세요."</li><li>"코코 열사병 위험. 냉방을 올리고 15분 안에 쉬어 주세요."</li><li>"공조가 꺼져 있어요. 코코에게 맞지 않는 온도예요."</li><li>"15분 뒤 코코 휴식 시간이에요."</li><li>"코코 쉴 시간이에요. 안전한 곳에 멈춰 주세요."</li><li>"3킬로미터 앞 휴게소에서 코코와 쉬어가요."</li><li>"코코 창문이 많이 열렸어요. 올려 주세요."</li><li>"코코 하네스를 채워 주세요."</li><li>"급제동이 반복됐어요. 부드럽게 운전해 주세요."</li><li>"스포츠 모드예요. 코코에게는 노멀 모드가 편해요."</li><li>"코코와 출발해요. 기록을 시작할게요."</li><li>"휴식 완료. 다시 출발해요."</li><li>"공조를 조절했어요."</li><li>"코코 혼자 있어요. 공조가 꺼져 있어요."</li><li>"코코 혼자 있어요. 실내 27도예요."</li><li>"식사한 지 얼마 안 됐어요. 멀미할 수 있으니 부드럽게 출발해 주세요."</li>
+    </ul></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">09</span><h3>발자국</h3><p>여행마다 쌓이는 기록. 사진 없이 차량 데이터만으로 만듭니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="main"><p>반려견별 합계(횟수 · 거리 · 시간)와 여행 목록(날짜, km, 시간, 휴식, 기분), 여행을 열면 출발·도착·휴식·급제동·창문·하네스·온도 이탈·공조 조절·진정 사운드·체크인 이벤트 타임라인. 홈에는 누적 발자국 km와 횟수. 저장소는 단일 DataStore JSON, 최근 500회 보관.</p></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">10</span><h3>설정 · 진단</h3><p>발표 때 에뮬레이터 콘솔 없이 상황을 재현하는 버튼이 여기 있습니다.</p><div class="chips"><span class="chip demo">데모 영상 (SDK 상태)</span></div></div>
+    <div class="main"><div class="tablewrap"><table>
+      <tr><th>항목</th><th>내용</th></tr>
+      <tr><td>차량 제어 (실험)</td><td>자동 조절이 실제로 공조를 바꿉니다. Playground 승인 전이라 기본 꺼짐</td></tr>
+      <tr><td>Pleos 음성 안내</td><td>끄면 알림음으로</td></tr>
+      <tr><td>진정 모드</td><td>잔잔한 음악 / 이야기 듣기 + 근거 한 줄</td></tr>
+      <tr><td>개발자 트리거</td><td>급제동 발생 · 휴식 시간 도달 · 추위 가정(16 °C · 설정 18 °C) · 더위 가정(27 °C · 설정 24 °C) · 운전자 하차(펫 단독) · 펫 단독 위험(27 °C · 공조 꺼짐) · 가정 해제</td></tr>
+      <tr><td>SDK 연결 상태</td><td>Vehicle · NaviHelper · TextToSpeech · FusedLocation 각각 연결/실패 사유</td></tr>
+    </table></div></div>
+  </article>
+
+  <article class="feature">
+    <div class="side"><span class="num">11</span><h3>디자인과 품질</h3><p>Pleos 공식 디자인 가이드(.fig)에서 토큰을 추출해 그대로 썼습니다.</p></div>
+    <div class="main"><ul class="voice" style="columns:1">
+      <li>Hyundai 테마 라이트/다크 색, 타입 스케일(Headline 60/56/48 … Label 24/20), 버튼 100/80/64, 아이콘 48, 행 112, 세로 GNB 140 · 버튼 124 — <code>scripts/pleos-tokens/</code></li>
+      <li>경고 3단계: 위험(negative, 닫기 없음) · 주의(accent, 닫아도 상태 줄 유지) · 정보(중립, 4초). 높이 112 고정 슬롯이라 본문이 움직이지 않음, 여러 건이면 "외 n건"</li>
+      <li>다크 기본, 강조색 하나(파랑) + 경고색 하나(주황빨강), 경고는 항상 아이콘 + 글자, 이모지·카드 그리드·그라데이션 없음</li>
+      <li>주행 중 화면 축소 규칙, 글자 입력은 정차 중에만</li>
+      <li>규칙 단위 테스트 13개(온도 범위, 생애 단계, 휴식 간격, 식사 알림, 급제동, 이동 판정, 지수), 서명된 릴리스 APK 내보내기 태스크, 데모 자동 녹화·자막 스크립트</li>
+    </ul></div>
+  </article>
+</section>
+
+<section id="sdk">
+  <header><h2>Pleos SDK 사용 현황</h2><p>Playground 프로젝트 상태와 실제 에뮬레이터 동작은 다릅니다. 둘 다 적었습니다.</p></header>
+  <div class="tablewrap"><table>
+    <tr><th>SDK</th><th>버전</th><th>Playground 상태</th><th>앱에서 쓰는 것</th><th>에뮬레이터</th></tr>
+    <tr><td>Vehicle (읽기)</td><td class="num">2.3.2</td><td>Ready to Use</td><td>공조 실측/설정 온도·풍량·방향·전원, 좌석 점유·벨트, 창문·문·트렁크 위치, 브레이크, 기어, 주행거리, EV 배터리</td><td class="ok">동작</td></tr>
+    <tr><td>Vehicle Control</td><td class="num">2.3.2</td><td>Not Available Yet</td><td>공조 온도·풍량·방향 설정 — <code>Settings.controlEnabled</code> 뒤</td><td class="ok">동작 (실험 플래그)</td></tr>
+    <tr><td>NaviHelper</td><td class="num">3.0.5</td><td>Ready to Use</td><td>목적지 남은 거리/시간, 휴게소 TBT, 경로 상태</td><td class="ok">연결 (기본 경로 없음)</td></tr>
+    <tr><td>TextToSpeech</td><td class="num">3.3.1</td><td>Not Available Yet</td><td>음성 안내 17문장, 이야기 낭독</td><td class="ok">동작 (팀 자격 증명)</td></tr>
+    <tr><td>FusedLocation</td><td class="num">1.1.3</td><td>Not Available Yet</td><td>출발·도착 좌표 (런타임 권한)</td><td class="ok">동작</td></tr>
+    <tr class="na"><td>SpeechToText</td><td class="num">3.3.1</td><td>Not Available Yet</td><td>미사용 (음성 명령은 후순위)</td><td>—</td></tr>
+  </table></div>
+  <div class="note">App Market 제출 시 <code>CONTROL_CAR_*</code> 권한은 승인 전까지 제거해야 합니다. 그 경우 자동 조절은 안내만 남습니다.</div>
+</section>
+
+<section id="demo">
+  <header><h2>데모 영상 <span style="color:var(--fg-3);font-weight:500">3분 15초</span></h2><p><code>docs/demo/dog-footprint-demo.mp4</code> — 에뮬레이터 화면을 녹화하고 아래에 자막 띠를 붙였습니다. 음성 안내는 에뮬레이터 캡처에 담기지 않는 내비 버스로 나가기 때문에 같은 문장을 macOS 음성으로 재현해 넣었습니다(해당 장면 자막에 "음성 재현"). 시각은 영상 기준입니다.</p></header>
+  <ol class="timeline">
+    <li><span class="t">0:01</span><div class="what"><b>인트로</b><span>문제 제기(McLaren 2005 · Hall 2020 수치) + 정차 홈, 음성 재현 안내 한 번</span></div></li>
+    <li><span class="t">0:06</span><div class="what"><b>프로필</b><span>변경 → 소형 → 퍼그: 적정 범위 19–21 °C · 휴식 90분으로 바뀜 → 다시 허스키 (10초)</span></div></li>
+    <li><span class="t">0:16</span><div class="what"><b>태우기</b><span>코코 태우기 → 마지막 식사 1시간 전 → 탑승 직후 하네스 주의</span></div></li>
+    <li><span class="t">0:32</span><div class="what"><b>하네스</b><span>착용 확인 → 주의 사라짐</span></div></li>
+    <li><span class="t">0:37</span><div class="what"><b>출발</b><span>주행 화면: 온도 · 판정 · 다음 휴식 · 진정 사운드 재생/정지</span></div></li>
+    <li><span class="t">1:08</span><div class="what"><b>열사병</b><span>(시뮬레이션 27 °C) 위험 배너 + 자동 조절 (차량 제어 실험 기능)</span></div></li>
+    <li><span class="t">1:29</span><div class="what"><b>창문</b><span>뒷좌석 창문 60 % → 창문을 올려 주세요</span></div></li>
+    <li><span class="t">1:39</span><div class="what"><b>휴식</b><span>(90분 경과 가정) 쉴 시간 → 휴식 완료</span></div></li>
+    <li><span class="t">1:54</span><div class="what"><b>도착</b><span>P 전환, 실내가 더우면 공조를 켜 두라는 주의 + 음성</span></div></li>
+    <li><span class="t">2:06</span><div class="what"><b>내리기 전 확인</b><span>운전석 문 열림 → 코코를 두고 내리시나요? 공조 켜짐+더움이라 "설정 20°C로 낮추기" → 정상 확인</span></div></li>
+    <li><span class="t">2:31</span><div class="what"><b>펫 단독</b><span>(30초 후) 코코 혼자 있어요 — 시간 · 최고 온도</span></div></li>
+    <li><span class="t">2:37</span><div class="what"><b>복귀</b><span>문 다시 열림 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 완료</span></div></li>
+    <li><span class="t">2:59</span><div class="what"><b>발자국</b><span>최근 2주 기록 목록, 속초 63 km 상세(이벤트 · 지수 이유)로 마무리</span></div></li>
+    <li><span class="t">3:12</span><div class="what"><b>아웃트로</b><span></span></div></li>
+  </ol>
+  <div class="two">
+    <div><h3>영상에 들어간 기능</h3><ul>
+      <li>프로필 입력 항목 전체 (편집 화면)</li><li>탑승 시 식사 시간 팝업과 식후 2시간 경고</li><li>여행 자동 시작, 주행 중 화면 축소</li><li>추위·더위 판정과 음성 안내, 적정 범위 표시</li><li>자동 조절(실험)로 실제 공조 변경</li><li>창문 경고, 급제동 이벤트, 하네스 미착용 줄, 편안함 지수</li><li>휴식 도달 안내와 휴식 완료</li><li>펫 단독 상태(위험·정상 두 가지)</li><li>진정 모드(음악)</li><li>여행 종료 기분 체크인, 발자국 목록, SDK 연결 상태</li>
+    </ul></div>
+    <div><h3>영상에 없는 기능</h3><ul>
+      <li>이야기 듣기 모드 (TTS 낭독) — 설정에서 전환해야 함</li><li>열사병 경보 (단두종·호흡기 프로필 필요)</li><li>휴게소 제안, 목적지 남은 시간 — 에뮬레이터에 경로가 없음</li><li>스포츠 모드 경고 — 에뮬레이터에 주행 모드 신호가 없음</li><li>자동 휴식 인식(5분 정차 + 문), 10분 정차 후 하차 확인 팝업 — 시간이 걸려 생략</li><li>정차 중 문 열림 경고, 고정 방식 "없음" 경고줄</li><li>발자국 상세 이벤트 타임라인, 영어 UI</li><li>프로필의 생애 단계·취약 조건 자동 표시 (화면엔 있으나 자막으로 짚지 않음)</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="tryout">
+  <header><h2>다른 사람이 직접 조작해 보려면</h2><p>Pleos Connect는 전용 에뮬레이터가 있어 실차 없이도 모든 기능을 만질 수 있습니다. 지금 당장 되는 길부터 순서대로.</p></header>
+
+  <div class="path rec">
+    <h3>1. Pleos Connect 에뮬레이터 + APK <span class="chip live" style="margin-left:6px">지금 가능</span></h3>
+    <p>우리가 개발·검증한 방식 그대로. 상대방 PC에 한 번만 설치하면 됩니다. 검증한 환경은 Apple Silicon Mac(arm64 이미지)입니다.</p>
+    <ol>
+      <li>Android Studio 설치 → SDK Manager → <i>SDK Update Sites</i>에 Pleos 애드온 사이트(<code>crp-arm64-sys-img.xml</code>, Pleos 문서의 <a href="https://document.pleos.ai/docs/connect/guide/getting-started/application-development/setup-connect-sdk-emulator">에뮬레이터 설정</a> 페이지) 추가 → 시스템 이미지 <b>Pleos Connect v2.1.0 (API 34)</b> 설치</li>
+      <li>Device Manager → Automotive → 새 AVD, 이 이미지 선택, RAM 4 GB, cold boot. 이름을 <code>Pleos_Connect</code>로 두면 저장소 스크립트가 그대로 맞습니다</li>
+      <li>APK 설치: <code>adb install -r apk/dog-footprint_dog-footprint_release.apk</code> (APK는 저장소에 포함, 약 58 MB). Pleos Playground 자격 증명이 빌드에 들어 있어 음성·내비 연결에 추가 설정이 없습니다</li>
+      <li>런처에서 dog-footprint 실행 → 위치 권한 허용 → 프로필 만들기 → 홈에서 탑승</li>
+      <li>차량 신호 넣기 (둘 중 하나):
+        <br>· 가상 콘솔: <code>adb forward tcp:8088 tcp:8088</code> 후 브라우저에서 <code>http://127.0.0.1:8088</code> — 기어, 주행거리, 브레이크, 공조, 창문, 문, 좌석을 클릭으로 조작
+        <br>· 스크립트: <code>scripts/vehicle-sim.sh forward</code> 다음 <code>gear Drive</code> · <code>odometer +0.5</code> · <code>window rl 60</code> · <code>brake 100</code> · <code>hvac …</code></li>
+      <li>콘솔 없이도: 설정 → 개발자 버튼(급제동 · 휴식 도달 · 온도 27/16 °C · 운전자 하차)로 핵심 상황을 바로 재현</li>
+    </ol>
+    <pre><code># 저장소를 받은 경우 — 데모 프로필(코코)까지 한 번에
+git clone git@github.com:dog-footprint/pleos-vehicle-app.git &amp;&amp; cd pleos-vehicle-app
+emulator -avd Pleos_Connect &amp;
+adb install -r apk/dog-footprint_dog-footprint_release.apk
+scripts/vehicle-sim.sh forward        # 가상 콘솔 포트 연결
+scripts/vehicle-sim.sh gear Drive &amp;&amp; scripts/vehicle-sim.sh odometer +0.3</code></pre>
+    <div class="note info">데모 프로필 주입(<code>scripts/demo-seed.sh</code>)은 디버그 빌드 전용입니다. 릴리스 APK를 쓰는 사람은 프로필을 직접 만들면 됩니다(견종 하나 고르면 30초).</div>
+  </div>
+
+  <div class="path">
+    <h3>알려진 한계</h3>
+    <ul>
+      <li><b>동승자가 남는 경우</b> — 운전자만 내리고 동승자가 차에 남아도, 앱은 운전석 문이 닫힌 뒤 30초가 지나면 "코코 혼자 있어요"로 판단할 수 있습니다. 조수석 점유 신호(<code>Seat.occupancy ROW_1_RIGHT</code>)가 켜져 있으면 펫 단독으로 넘어가지 않도록 했지만, 뒷좌석 동승자나 점유 센서가 없는 차에서는 구분하지 못합니다. 에뮬레이터는 좌석 점유 값을 반전해 보고하므로(<code>CLAUDE.md</code>) 실차에서 다시 확인해야 합니다.</li>
+      <li><b>시동 상태</b> — Vehicle SDK에 시동/전원 상태 읽기 API가 없어(<code>IgnitionState</code> 상수만 존재) "내리기 전 확인"은 P 전환과 운전석 문 열림을 기준으로 띄웁니다. 전원 차단 경고등(<code>Safety.registerPowerDownWarningIndicator</code>)이 오면 1단계 알림을 앞당깁니다.</li>
+      <li><b>공조 유지</b> — 시동을 끈 뒤 공조를 유지하는 API(유틸리티 모드 등)가 없어 "공조 켜기"는 시동을 켜 둔 동안만 유효합니다. 릴리스 빌드(Vehicle Control 미승인)에서는 버튼 대신 "공조를 켜 두고, 유틸리티 모드로 내리세요" 안내만 보입니다.</li>
+    </ul>
+  </div>
+
+<div class="path">
+    <h3>2. 저장소 공유</h3>
+    <p>GitHub 조직 <code>dog-footprint</code>의 비공개 저장소 <code>pleos-vehicle-app</code>. 공모전 규정상 심사용 계정을 collaborator로 초대해야 하고, 팀 외부 체험자도 같은 방식으로 초대하면 됩니다. 저장소에는 APK, 데모 영상, 이 문서, 근거 문서(<code>docs/CARE_RULES.md</code>), 에뮬레이터 스크립트가 모두 있습니다. 직접 빌드하려면 JDK 21과 <code>.env</code>(Playground Client ID/Secret)가 필요하므로, 빌드 없이 APK만 쓰는 쪽이 간단합니다.</p>
+  </div>
+
+  <div class="path">
+    <h3>3. 실차 · 테스터 배포 <span class="chip flag" style="margin-left:6px">심사 필요</span></h3>
+    <p>Pleos Connect 차량에 올리려면 Playground에서 App Market 심사를 거쳐야 합니다(<a href="https://document.pleos.ai/docs/pleos-only/distribute/app-review-guide/review-functionality-performance-stability">앱 심사 가이드</a>). 그 전에 <code>CONTROL_CAR_*</code> 권한을 빼야 하고, TTS·FusedLocation·Vehicle Control은 우리 프로젝트에서 아직 "Not Available Yet"이라 승인 범위에 따라 기능이 안내 전용으로 줄어듭니다. Playground에 별도 테스터 배포 기능이 있는지는 확인하지 못했습니다 — 2차 전에 Playground 콘솔에서 확인할 항목입니다.</p>
+  </div>
+
+  <div class="path">
+    <h3>4. 현장 시연 (2차 라이브 PT, 전시)</h3>
+    <ol>
+      <li>에뮬레이터가 켜진 노트북 한 대, 외부 모니터에 미러링. 앱은 디버그 빌드 + <code>scripts/demo-seed.sh</code>로 코코 프로필을 미리 넣어 둠</li>
+      <li>심사위원이 직접 누를 수 있는 것: 탑승(식사 팝업), 자동 조절, 진정 사운드, 휴식 완료, 여행 종료, 설정의 개발자 버튼</li>
+      <li>진행자가 옆에서 신호를 넣는 것: <code>vehicle-sim.sh window rl 60</code>, <code>brake</code>, <code>gear</code> — 터미널 한 줄씩</li>
+      <li>소리가 중요한 장면(음성 안내, 음악)은 에뮬레이터 오디오를 스피커로 출력</li>
+      <li>보험: 데모 영상(3:15)을 같은 화면에 띄울 수 있게 준비</li>
+    </ol>
+  </div>
+
+  <div class="path">
+    <h3>5. 에뮬레이터 없이 (웹 체험판) <span class="chip flag" style="margin-left:6px">미구현</span></h3>
+    <p>심사위원이나 일반 관람객이 브라우저에서 만져 보게 하려면 규칙(<code>ComfortRules</code>)을 JS로 옮기고 홈 화면을 흉내 낸 웹 시뮬레이터가 필요합니다. 차량 신호 대신 슬라이더(온도·창문·기어)를 두면 "견종을 바꾸면 적정 범위가 어떻게 달라지는가"를 가장 빨리 보여 줄 수 있습니다. 이 저장소에는 아직 없고, 만든다면 반나절 분량입니다.</p>
+  </div>
+</section>
+
+<footer>
+  <span><a href="../README.md">README</a></span>
+  <span><a href="CARE_RULES.md">docs/CARE_RULES.md — 규칙 근거</a></span>
+  <span><a href="CONTEST.md">docs/CONTEST.md — 공모전 규정·일정</a></span>
+  <span><a href="demo/dog-footprint-demo.mp4">데모 영상</a></span>
+  <span>라운드 2 라이브 PT 2026-12-03/04</span>
+</footer>
+
+</div>
+</body>
+</html>

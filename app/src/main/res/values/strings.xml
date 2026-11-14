@@ -44,11 +44,11 @@
     <string name="home_total_km_fmt">누적 발자국 %1$.1f km · %2$d회</string>
     <string name="tile_temp_title">실내 온도</string>
     <string name="tile_temp_band_fmt">적정 %1$.0f–%2$.0f°C</string>
-    <string name="tile_temp_target_fmt">설정 %1$.0f°C · 바람 %2$s</string>
+    <string name="tile_temp_target_fmt">설정 %1$.0f°C · 바람 세기 %2$s</string>
     <string name="tile_temp_apply">자동 조절</string>
     <string name="tile_temp_apply_disabled">자동 조절은 Pleos 승인 후 제공</string>
-    <string name="apply_result_applied">조절 완료: %1$s</string>
-    <string name="apply_result_partial">일부만 적용됨: %1$s / 실패: %2$s</string>
+    <string name="apply_result_applied_fmt">공조를 맞췄어요 — %1$s</string>
+    <string name="apply_result_partial_fmt">일부만 맞췄어요 — %1$s. 나머지는 조절하지 못했어요</string>
     <string name="apply_result_not_enabled">설정에서 실험 기능(차량 제어)을 켜면 실제로 조절해요.</string>
     <string name="apply_result_nothing">조절할 것이 없어요.</string>
     <string name="apply_result_error">차량 제어 호출에 실패했어요.</string>
@@ -82,7 +82,7 @@
     <string name="trip_end_note_hint">한 줄 메모 (선택)</string>
     <string name="mood_happy">좋았어요</string>
     <string name="mood_okay">보통이에요</string>
-    <string name="mood_stressed">힘들어했어요</string>
+    <string name="mood_stressed">힘들었어요</string>
     <string name="action_keep_driving">계속 운행</string>
     <string name="action_end">종료</string>
     <string name="action_cancel">취소</string>
@@ -166,9 +166,9 @@
     <string name="settings_demo_body">발표 때 에뮬레이터 조작 없이 상황을 재현해요.</string>
     <string name="demo_brake">급제동 발생</string>
     <string name="demo_break">휴식 시간 도달</string>
-    <string name="demo_temp_hot">온도 27°C 가정</string>
-    <string name="demo_temp_cold">온도 16°C 가정</string>
-    <string name="demo_temp_clear">온도 가정 해제</string>
+    <string name="demo_temp_hot">더위 가정 (27°C · 설정 24°C)</string>
+    <string name="demo_temp_cold">추위 가정 (16°C · 설정 18°C)</string>
+    <string name="demo_temp_clear">가정 해제</string>
     <string name="settings_about">Pleos Connect SDK · Vehicle %1$s · NaviHelper %2$s · TTS %3$s</string>
     <string name="duration_h_m">%1$d시간 %2$d분</string>
     <string name="duration_m">%1$d분</string>
@@ -179,7 +179,7 @@
     <string name="verdict_ok">괜찮아요</string>
     <string name="verdict_hot">더워요</string>
     <string name="verdict_cold">추워요</string>
-    <string name="verdict_heat">위험해요</string>
+    <string name="verdict_heat">열사병 위험</string>
     <string name="verdict_hvac_off">공조 꺼짐</string>
     <string name="verdict_unknown">온도 확인 중</string>
     <string name="temp_zone_fmt">%1$s 온도</string>
@@ -260,4 +260,121 @@
         <item>길이 부드럽게 굽어지고, 차는 조용히 따라가.</item>
         <item>잘하고 있어. 조금만 더 가면 도착이야.</item>
     </string-array>
+
+    <!-- review fixes: driving-mode settings, band delta, structured apply result, pet-alone layout, demo scenarios -->
+    <string name="settings_driving_locked">정차 중에 모든 설정을 볼 수 있어요</string>
+    <string name="temp_delta_cold_fmt">적정 %1$.0f°C까지 %2$.0f°C 부족</string>
+    <string name="temp_delta_hot_fmt">적정 %1$.0f°C까지 %2$.0f°C 초과</string>
+    <string name="change_temp_fmt">%1$.0f°C</string>
+    <string name="change_fan_fmt">바람 %1$d</string>
+    <string name="change_dir_face">얼굴 송풍</string>
+    <string name="change_dir_floor">바닥 송풍</string>
+    <string name="change_dir_both">얼굴·바닥 송풍</string>
+    <string name="change_power">공조 켜짐</string>
+    <string name="change_window">창문 닫음</string>
+    <string name="pet_alone_elapsed_label">혼자 있은 시간</string>
+    <string name="pet_alone_temp_label">자리 온도</string>
+    <string name="pet_alone_hvac_label">공조</string>
+    <string name="pet_alone_hvac_on_short">켜짐 · 설정 %1$.0f°C</string>
+    <string name="pet_alone_hvac_off_short">꺼짐</string>
+    <string name="demo_pet_alone_risk">펫 단독 위험 (27°C · 공조 꺼짐)</string>
+
+    <!-- Home redesign: one action (board), state-specific screens, warning ladder, check-in -->
+    <string name="home_board_fmt">%1$s 태우기</string>
+    <string name="home_aboard_fmt">%1$s 탑승 중</string>
+    <string name="home_unboard">내리기</string>
+    <string name="home_not_aboard_driving">미탑승 · 정차 후 태워 주세요</string>
+    <string name="home_footprints_fmt">누적 발자국 %1$.1f km · %2$d회</string>
+    <string name="home_footprints_last_fmt">누적 발자국 %1$.1f km · %2$d회 · 마지막 %3$s</string>
+    <string name="calm_playing_music">잔잔한 음악 재생 중 · 정지</string>
+    <string name="calm_playing_story">이야기 재생 중 · 정지</string>
+    <string name="check_title">출발 전 확인</string>
+    <string name="check_window">창문</string>
+    <string name="check_harness">하네스</string>
+    <string name="check_door">문</string>
+    <string name="check_closed">닫힘</string>
+    <string name="check_open">열림</string>
+    <string name="check_worn">착용</string>
+    <string name="check_not_worn">미착용</string>
+    <string name="check_unknown">확인 불가</string>
+    <string name="break_next_fmt">다음 휴식 %1$s 뒤</string>
+    <string name="break_soon_fmt">%1$d분 뒤 휴식</string>
+    <string name="break_now">지금 쉬어 주세요</string>
+    <string name="minutes_fmt">%1$d분</string>
+    <string name="hours_minutes_fmt">%1$d시간 %2$d분</string>
+    <string name="hours_fmt">%1$d시간</string>
+    <string name="pet_alone_for_fmt">혼자 있은 지 %1$d분</string>
+    <string name="pet_alone_just_now">방금 혼자 남았어요</string>
+    <string name="pet_alone_hvac_on_fmt2">공조 켜짐 · 설정 %1$.0f°C</string>
+    <string name="pet_alone_hvac_off_short2">공조 꺼짐</string>
+    <string name="pet_alone_cool_on">냉방 켜기</string>
+    <string name="pet_alone_heat_on">난방 켜기</string>
+    <string name="trip_done_title_fmt">%1$s와의 드라이브 끝</string>
+    <string name="trip_done_summary_fmt">%1$.1f km · %2$s · 휴식 %3$d회 · 편안함 %4$d</string>
+    <string name="trip_done_saved_fmt">기록했어요 — %1$s</string>
+    <string name="trip_add_note">메모 추가</string>
+    <string name="trip_skip">건너뛰기</string>
+    <string name="trip_done">완료</string>
+    <string name="alert_more_fmt">외 %1$d건</string>
+    <string name="fp_summary_fmt">%1$.1f km · %2$s · 휴식 %3$d회</string>
+    <string name="fp_score_fmt">편안함 %1$d</string>
+    <string name="fp_score_perfect">감점 없음</string>
+    <string name="fp_penalty_fmt">%1$s %2$d회로 −%3$d</string>
+    <string name="fp_mood_fmt">기분 %1$s</string>
+    <string name="settings_calm_body">차 안에서 개를 진정시키는 소리를 틀어요</string>
+    <string name="settings_control_body_short">자동 조절 버튼이 실제로 공조·창문을 제어해요.</string>
+    <string name="settings_control_debug_note">Pleos Playground에서 Vehicle Control 승인 전 · 에뮬레이터 데모용</string>
+    <string name="profile_pick_breed">견종을 골라 주세요</string>
+    <string name="breed_group_other">믹스 · 기타</string>
+    <string name="nav_locked_short">정차 후 볼 수 있어요</string>
+
+    <!-- 3rd review: leaving flow, context-specific alert wording (the banner says what to do), calm split, check-in -->
+    <string name="alert_heat_driving">냉방을 최대로 · 15분 안에 쉬어 주세요</string>
+    <string name="alert_heat_parked">냉방을 켜 주세요</string>
+    <string name="alert_heat_pre_exit">공조를 켜 두고 내리세요</string>
+    <string name="alert_heat_pet_alone">돌아오면 바로 공조를 켜 주세요</string>
+    <string name="alert_hvac_off">공조를 켜 주세요</string>
+    <string name="alert_window">창문을 올려 주세요</string>
+    <string name="alert_door">문을 닫아 주세요</string>
+    <string name="alert_belt_driving">하네스를 채워 주세요</string>
+    <string name="alert_belt_parked">출발 전에 하네스를 채워 주세요</string>
+    <string name="alert_meal_fmt">식사 후 %1$d분 — 부드럽게 출발해 주세요</string>
+    <string name="alert_break_due">안전한 곳에 멈춰 쉬어 주세요</string>
+    <string name="alert_leave_prep">내리기 전에 공조를 켜 두세요</string>
+    <string name="alert_list_title">지금 경고</string>
+    <string name="guide_leave_prep">%1$s를 두고 내리면 공조를 켜 두세요.</string>
+    <string name="guide_climate_kept">공조를 켜 두었어요. 시동을 켜 둔 동안 유지돼요.</string>
+    <string name="pre_exit_title_fmt">%1$s를 두고 내리시나요?</string>
+    <string name="pre_exit_ok_fmt">실내 %1$d° · 공조 켜짐. 다녀오세요</string>
+    <string name="pre_exit_keep">공조 켜기</string>
+    <string name="pre_exit_keep_hint">시동을 켜 둔 동안만 유지돼요</string>
+    <string name="pre_exit_release_hint">공조를 켜 두고, 유틸리티 모드로 내리세요</string>
+    <string name="pre_exit_together_fmt">%1$s도 같이 내려요</string>
+    <string name="pre_exit_limit">차량이 꺼지면 앱도 꺼져요. 내리기 전에 확인하세요</string>
+    <string name="pet_alone_summary_fmt">혼자 %1$d분 · 그동안 최고 %2$d°</string>
+    <string name="pet_alone_summary_now_fmt">방금 혼자 남았어요 · 실내 %1$d°</string>
+    <string name="pet_alone_risk_hvac_fmt">실내 %1$d° · 공조 꺼짐 — 돌아오면 바로 공조를 켜 주세요</string>
+    <string name="pet_alone_risk_temp_fmt">실내 %1$d° — 돌아오면 바로 공조를 켜 주세요</string>
+    <string name="pet_alone_back_hint">출발하면 해제돼요</string>
+    <string name="calm_status_music">잔잔한 음악 재생 중</string>
+    <string name="calm_status_story">이야기 재생 중</string>
+    <string name="calm_stop">정지</string>
+    <string name="harness_before_departure">출발 전에 하네스를 채워 주세요</string>
+    <string name="trip_done_mood_prompt_fmt">오늘 %1$s는 어땠나요?</string>
+    <string name="trip_view_detail">기록 자세히 보기</string>
+    <string name="seat_map_sensor_note">앞좌석 센서 기준</string>
+    <string name="seat_map_label">자리</string>
+    <string name="action_change">변경</string>
+
+    <!-- 4th review: cause-specific climate action, merged pre-exit line, caution-level climate-off -->
+    <string name="climate_turn_on">공조 켜기</string>
+    <string name="climate_cool_to_fmt">설정 %1$d°C로 낮추기</string>
+    <string name="climate_heat_to_fmt">설정 %1$d°C로 올리기</string>
+    <string name="climate_guide_turn_on">공조를 켜 두고, 유틸리티 모드로 내리세요</string>
+    <string name="climate_guide_cool_fmt">공조를 %1$d°C로 낮추고, 유틸리티 모드로 내리세요</string>
+    <string name="climate_guide_heat_fmt">공조를 %1$d°C로 올리고, 유틸리티 모드로 내리세요</string>
+    <string name="pre_exit_line_fmt">적정 %1$.0f–%2$.0f°C · 공조 켜짐 %3$.0f°C · 바람 %4$s</string>
+    <string name="pre_exit_line_off_fmt">적정 %1$.0f–%2$.0f°C · 공조 꺼짐</string>
+    <string name="pet_alone_hvac_caution_fmt">실내 %1$d° · 공조 꺼짐 — 돌아오면 공조를 켜 주세요</string>
+    <string name="action_close">닫기</string>
 </resources>
