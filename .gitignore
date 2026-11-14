@@ -1,0 +1,19 @@
+*.iml
+.gradle/
+.kotlin/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+
+# Signing material — never commit
+*.jks
+*.keystore
+/keystore.properties
+
+# Pleos Playground credentials (PROJECT_ID, CLIENT_ID, CLIENT_SECRET, CRN)
+.env

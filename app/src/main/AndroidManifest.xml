@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Pleos Connect is Android Automotive OS based. -->
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="true" />
+
+    <!--
+      Pleos permissions are NOT runtime permissions; declaring them is enough on the emulator.
+      For App Market review, declare only what the app actually uses.
+      Full list: https://document.pleos.ai/docs/pleos-only/connect-sdk-pleos/Vehicle/vehicle-permission
+    -->
+    <!-- Vehicle SDK (read) -->
+    <uses-permission android:name="pleos.car.permission.CAR_INFO" />
+    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
+    <uses-permission android:name="pleos.car.permission.CAR_ENERGY" />
+    <!-- FusedLocation SDK -->
+    <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
+    <!-- NaviHelper SDK -->
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE_SEARCH" />
+    <!-- TextToSpeech / SpeechToText SDK -->
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+    <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PleosVehicleApp">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:screenOrientation="landscape">
+            <!-- Allows the activity to stay visible while the vehicle is moving (AAOS UX restrictions). -->
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
