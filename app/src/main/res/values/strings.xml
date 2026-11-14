@@ -17,21 +17,21 @@
     <string name="zone_fallback_note">(앞좌석 센서 기준)</string>
 
     <!-- Guidance (spoken + banner) -->
-    <string name="guide_too_hot">%1$s에게는 더워요. %2$s 온도를 %3$d°C로 낮춰 주세요.</string>
-    <string name="guide_too_cold">%1$s에게는 추워요. %2$s 온도를 %3$d°C로 올려 주세요.</string>
-    <string name="guide_heat_alert">%1$s는 단두종이라 열사병 위험이 있어요. 냉방을 강화하고 15분 안에 쉬어 주세요.</string>
-    <string name="guide_hvac_off">공조가 꺼져 있어요. %1$s 온도가 %2$s에게 맞지 않아요.</string>
-    <string name="guide_break_pre">%1$d분 후 %2$s의 휴식 시간이에요.</string>
-    <string name="guide_break_due">%1$s가 쉴 시간이에요. 안전한 곳에 잠시 멈춰 주세요.</string>
-    <string name="guide_rest_area">다음 휴게소가 %1$.0fkm 앞이에요. 거기서 %2$s와 쉬어가요.</string>
-    <string name="guide_window_open">%1$s 창문이 많이 열려 있어요. 머리를 내밀지 않도록 창문을 올려 주세요.</string>
-    <string name="guide_belt">%1$s의 하네스가 채워지지 않았어요.</string>
-    <string name="guide_brake_burst">급제동이 반복됐어요. %1$s가 놀랐을 수 있어요. 부드럽게 운전해 주세요.</string>
-    <string name="guide_sport_mode">스포츠 모드예요. %1$s와 함께라면 노멀 모드가 더 편안해요.</string>
-    <string name="guide_trip_started">%1$s와의 여행을 기록하기 시작했어요.</string>
-    <string name="guide_break_taken">휴식 완료! 다시 출발해요.</string>
-    <string name="guide_climate_applied">%1$s 공조를 조절했어요.</string>
-    <string name="climate_ok">%1$s에게 딱 좋은 온도예요.</string>
+    <string name="guide_too_hot">%1$s에게 더워요. %3$d도로 낮춰 주세요.</string>
+    <string name="guide_too_cold">%1$s에게 추워요. %3$d도로 올려 주세요.</string>
+    <string name="guide_heat_alert">%1$s 열사병 위험. 냉방을 올리고 15분 안에 쉬어 주세요.</string>
+    <string name="guide_hvac_off">공조가 꺼져 있어요. %2$s에게 맞지 않는 온도예요.</string>
+    <string name="guide_break_pre">%1$d분 뒤 %2$s 휴식 시간이에요.</string>
+    <string name="guide_break_due">%1$s 쉴 시간이에요. 안전한 곳에 멈춰 주세요.</string>
+    <string name="guide_rest_area">%1$.0f킬로미터 앞 휴게소에서 %2$s와 쉬어가요.</string>
+    <string name="guide_window_open">%1$s 창문이 많이 열렸어요. 올려 주세요.</string>
+    <string name="guide_belt">%1$s 하네스를 채워 주세요.</string>
+    <string name="guide_brake_burst">급제동이 반복됐어요. 부드럽게 운전해 주세요.</string>
+    <string name="guide_sport_mode">스포츠 모드예요. %1$s에게는 노멀 모드가 편해요.</string>
+    <string name="guide_trip_started">%1$s와 출발해요. 기록을 시작할게요.</string>
+    <string name="guide_break_taken">휴식 완료. 다시 출발해요.</string>
+    <string name="guide_climate_applied">공조를 조절했어요.</string>
+    <string name="climate_ok">%1$s에게 딱 좋아요.</string>
     <string name="climate_unknown">실내 온도를 아직 못 읽었어요.</string>
 
     <!-- Home -->
@@ -198,8 +198,8 @@
     <string name="pet_alone_hvac_off">공조 꺼짐 — 실내 온도가 오를 수 있어요</string>
     <string name="pet_alone_hint">돌아와서 출발하거나 탑승을 끄면 해제돼요</string>
     <string name="pet_alone_turn_on">공조 켜기</string>
-    <string name="guide_pet_alone_hvac_off">%1$s가 차에 혼자 있어요. 공조가 꺼져 있어요.</string>
-    <string name="guide_pet_alone_temp">%1$s가 혼자 있는 차 안 온도가 %2$.0f도예요.</string>
+    <string name="guide_pet_alone_hvac_off">%1$s 혼자 있어요. 공조가 꺼져 있어요.</string>
+    <string name="guide_pet_alone_temp">%1$s 혼자 있어요. 실내 %2$.0f도예요.</string>
     <string name="driving_locked">주행 중에는 요약만 보여요. 정차 후 자세히 볼 수 있어요.</string>
     <string name="driving_edit_locked">정차 후 편집할 수 있어요</string>
     <string name="footprints_week_fmt">이번 주 %1$d회 · %2$.1f km</string>

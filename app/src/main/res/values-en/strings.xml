@@ -14,21 +14,21 @@
     <string name="zone_cargo">cargo area</string>
     <string name="zone_fallback_note">(front-seat sensor)</string>
 
-    <string name="guide_too_hot">It is too warm for %1$s. Lower the %2$s temperature to %3$d°C.</string>
-    <string name="guide_too_cold">It is too cold for %1$s. Raise the %2$s temperature to %3$d°C.</string>
-    <string name="guide_heat_alert">%1$s is a flat-faced breed at risk of heatstroke. Increase cooling and take a break within 15 minutes.</string>
-    <string name="guide_hvac_off">Climate control is off. The %1$s temperature is not right for %2$s.</string>
-    <string name="guide_break_pre">Break time for %2$s in %1$d minutes.</string>
-    <string name="guide_break_due">Time for %1$s to rest. Please stop somewhere safe.</string>
-    <string name="guide_rest_area">The next rest area is %1$.0f km ahead. Take a break there with %2$s.</string>
-    <string name="guide_window_open">The %1$s window is open wide. Raise it so the dog cannot lean out.</string>
-    <string name="guide_belt">%1$s\'s harness is not fastened.</string>
-    <string name="guide_brake_burst">Repeated hard braking. %1$s may be startled. Please drive gently.</string>
-    <string name="guide_sport_mode">Sport mode is on. Normal mode is more comfortable with %1$s on board.</string>
-    <string name="guide_trip_started">Started recording the trip with %1$s.</string>
-    <string name="guide_break_taken">Break done! Let\'s go.</string>
-    <string name="guide_climate_applied">Adjusted the %1$s climate.</string>
-    <string name="climate_ok">The temperature is just right for %1$s.</string>
+    <string name="guide_too_hot">Too warm for %1$s. Lower it to %3$d°C.</string>
+    <string name="guide_too_cold">Too cold for %1$s. Raise it to %3$d°C.</string>
+    <string name="guide_heat_alert">Heat risk for %1$s. More cooling, and a break within 15 minutes.</string>
+    <string name="guide_hvac_off">Climate control is off. Not the right temperature for %2$s.</string>
+    <string name="guide_break_pre">Break for %2$s in %1$d minutes.</string>
+    <string name="guide_break_due">Time for %1$s to rest. Stop somewhere safe.</string>
+    <string name="guide_rest_area">Rest area in %1$.0f km. Take a break there with %2$s.</string>
+    <string name="guide_window_open">The %1$s window is open wide. Please raise it.</string>
+    <string name="guide_belt">Fasten %1$s\'s harness.</string>
+    <string name="guide_brake_burst">Repeated hard braking. Please drive gently.</string>
+    <string name="guide_sport_mode">Sport mode is on. Normal mode is easier on %1$s.</string>
+    <string name="guide_trip_started">Off we go with %1$s. Recording started.</string>
+    <string name="guide_break_taken">Break done. Let\'s go.</string>
+    <string name="guide_climate_applied">Climate adjusted.</string>
+    <string name="climate_ok">Just right for %1$s.</string>
     <string name="climate_unknown">Cabin temperature not available yet.</string>
 
     <string name="home_no_dog_title">Add the dog riding with you</string>
@@ -191,8 +191,8 @@
     <string name="pet_alone_hvac_off">Climate off — the cabin may heat up</string>
     <string name="pet_alone_hint">Clears when you drive off or switch off On board</string>
     <string name="pet_alone_turn_on">Turn climate on</string>
-    <string name="guide_pet_alone_hvac_off">%1$s is alone in the car and the climate control is off.</string>
-    <string name="guide_pet_alone_temp">The cabin where %1$s is waiting is %2$.0f degrees.</string>
+    <string name="guide_pet_alone_hvac_off">%1$s is alone and the climate control is off.</string>
+    <string name="guide_pet_alone_temp">%1$s is alone. The cabin is %2$.0f degrees.</string>
     <string name="driving_locked">Only the summary is shown while driving. Details are available when parked.</string>
     <string name="driving_edit_locked">Editing is available when parked</string>
     <string name="footprints_week_fmt">This week %1$d trips · %2$.1f km</string>
