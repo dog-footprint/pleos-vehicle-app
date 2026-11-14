@@ -29,8 +29,11 @@ Tried in order (3rd review G1):
 
 `make-demo-video.sh` uses fixed gains, not `loudnorm` (single-pass loudnorm adapts over time and pumped the quiet
 background up to full level): capture +6 dB (the app's calm music then peaks around −5 dB), synthesized
-voice as rendered (peaks ≈ −3 dB), background bed (`calm_aria.m4a`, CC0) at −20 dB from the first frame, gated off
-while the app's own music plays and side-chain ducked under every voice line, then a limiter at 0.9.
+voice as rendered (peaks ≈ −3 dB), background bed (`calm_aria.m4a`, CC0) levelled with `dynaudnorm` (250 ms frames, up to +32 dB; the Aria's
+quiet bars sit 30 dB under its peaks and used to drop out between lines) and scaled to −20 dB from the first frame,
+gated off exactly while the app's own music plays (`calm_on`/`calm_off` marks) and side-chain ducked under every
+voice line, then a limiter at 0.9. `check-demo.py` fails the render if any 1 s window outside the voice lines (±1 s)
+and the music range falls below −40 dB.
 
 ## Live PT: does the emulator's navigation bus reach the host speakers?
 

@@ -72,11 +72,15 @@ else:
 
 # Voice track: one `say` render per line, delayed to its time, mixed over the capture.
 voice_inputs, voice_chain = [], []
+windows = []
 if voice == "synth":
     for n, e in enumerate(events):
         aiff = f"{indir}/voice/{n:02d}.aiff"
         subprocess.run(["say", "-v", "Yuna", "-r", "190", "-o", aiff, e["text"]], check=True)
+        dur = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", aiff]))
+        windows.append({"start": e["t"], "end": round(e["t"] + dur, 2)})
         voice_inputs.append(aiff); voice_chain.append((n, int(e["t"] * 1000)))
+json.dump(windows, open(f"{indir}/voice_windows.json", "w"))
 
 seg_inputs = " ".join(f"-i {indir}/demo-{k}.webm" for k in order)
 cap_inputs = " ".join(f"-i {p}" for p, _, _ in filters)
@@ -102,7 +106,9 @@ if bed_from is not None and os.path.exists(bed):
     # Loop the bed for the whole length, drop it while the app's calm music plays (same piece), then duck it
     # under the synthesized voice with a sidechain compressor.
     calm_gate = f",volume=enable='between(t,{abs_marks['calm_on']},{abs_marks['calm_off']})':volume=0" if "calm_on" in abs_marks and "calm_off" in abs_marks else ""
-    chain.append(f"[{next_idx}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},aformat=sample_rates=48000:channel_layouts=stereo,volume=0.1{calm_gate}[bedraw]")
+    # The Aria's quiet bars drop 30 dB below its peaks; level the bed first (dynaudnorm, 250 ms frames, up to +32 dB on the quiet
+    # frames) so it never falls below -40 dB outside the voice lines, then scale to -20 dB.
+    chain.append(f"[{next_idx}:a]aloop=loop=-1:size=2e9,atrim=0:{total:.2f},aformat=sample_rates=48000:channel_layouts=stereo,dynaudnorm=f=250:g=7:m=40:p=0.95,volume=0.1{calm_gate}[bedraw]")
     next_idx += 1
     # Fixed gains instead of single-pass loudnorm (which adapts over time and pumped the bed up to full level):
     # capture +18 dB (the emulator records the app's music around -36 dB), voice as rendered, bed -20 dB.

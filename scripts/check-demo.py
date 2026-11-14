@@ -45,6 +45,24 @@ if calm:
 else:
     print("calm music range not logged — FAIL"); ok = False
 
+# Background bed: outside the voice lines (±1 s) and the app's own music, every 1 s window must keep ≥ -40 dB.
+vw = json.load(open(f"{IN}/voice_windows.json")) if os.path.exists(f"{IN}/voice_windows.json") else []
+total = float(subprocess.check_output(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", VIDEO]))
+excluded = [(w["start"] - 1.0, w["end"] + 1.0) for w in vw] + ([(calm["on"] - 1.0, calm["off"] + 1.0)] if calm else [])
+def covered(t0, t1): return any(a <= t0 and t1 <= b or (t0 < b and t1 > a) for a, b in excluded)
+gaps = []
+t = 1.0
+while t + 1.0 < total - 1.0:
+    if not covered(t, t + 1.0):
+        db = max_db(t, t + 1.0)
+        if db < -40.0: gaps.append((t, db))
+    t += 1.0
+if gaps:
+    ok = False
+    print(f"background bed below -40 dB in {len(gaps)} window(s): " + ", ".join(f"{t:.0f}s {db:.0f}dB" for t, db in gaps[:8]) + (" …" if len(gaps) > 8 else ""))
+else:
+    print("background bed ≥ -40 dB outside voice/music: PASS")
+
 raw = subprocess.run(
     ["ffmpeg", "-v", "error", "-i", VIDEO, "-vf", "fps=4,crop=6:6:650:384,scale=1:1,format=gray", "-f", "rawvideo", "-"],
     capture_output=True).stdout
