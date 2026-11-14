@@ -1,4 +1,4 @@
-package com.hmgchallenge.vehicleapp.pleos
+package com.dogfootprint.app.pleos
 
 import ai.pleos.playground.location.fused.FusedLocation
 import ai.pleos.playground.location.fused.listener.FusedLocationListener
@@ -22,9 +22,10 @@ class LocationSource(context: Context) {
 
     private val fusedLocation = FusedLocation(context.applicationContext)
 
-    fun initialize() = fusedLocation.initialize()
+    /** @return false when the Pleos location service is missing or refuses the binding. */
+    fun initialize(): Boolean = runCatching { fusedLocation.initialize() }.isSuccess
 
-    fun release() = fusedLocation.release()
+    fun release() { runCatching { fusedLocation.release() } }
 
     fun updates(): Flow<Result<LocationData>> = callbackFlow {
         val listener = object : FusedLocationListener {

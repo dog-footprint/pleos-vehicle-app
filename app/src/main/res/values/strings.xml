@@ -1,3 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">dog-footprint</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">홈</string>
+    <string name="nav_footprints">발자국</string>
+    <string name="nav_profile">프로필</string>
+    <string name="nav_settings">설정</string>
+
+    <!-- Zones -->
+    <string name="zone_row2_left">뒷좌석 왼쪽</string>
+    <string name="zone_row2_right">뒷좌석 오른쪽</string>
+    <string name="zone_row2_center">뒷좌석 가운데</string>
+    <string name="zone_row1_right">조수석</string>
+    <string name="zone_cargo">트렁크(카고)</string>
+    <string name="zone_fallback_note">(앞좌석 센서 기준)</string>
+
+    <!-- Guidance (spoken + banner) -->
+    <string name="guide_too_hot">%1$s에게는 더워요. %2$s 온도를 %3$d°C로 낮춰 주세요.</string>
+    <string name="guide_too_cold">%1$s에게는 추워요. %2$s 온도를 %3$d°C로 올려 주세요.</string>
+    <string name="guide_heat_alert">%1$s는 단두종이라 열사병 위험이 있어요. 냉방을 강화하고 15분 안에 쉬어 주세요.</string>
+    <string name="guide_hvac_off">공조가 꺼져 있어요. %1$s 온도가 %2$s에게 맞지 않아요.</string>
+    <string name="guide_break_pre">%1$d분 후 %2$s의 휴식 시간이에요.</string>
+    <string name="guide_break_due">%1$s가 쉴 시간이에요. 안전한 곳에 잠시 멈춰 주세요.</string>
+    <string name="guide_rest_area">다음 휴게소가 %1$.0fkm 앞이에요. 거기서 %2$s와 쉬어가요.</string>
+    <string name="guide_window_open">%1$s 창문이 많이 열려 있어요. 머리를 내밀지 않도록 창문을 올려 주세요.</string>
+    <string name="guide_belt">%1$s의 하네스가 채워지지 않았어요.</string>
+    <string name="guide_brake_burst">급제동이 반복됐어요. %1$s가 놀랐을 수 있어요. 부드럽게 운전해 주세요.</string>
+    <string name="guide_sport_mode">스포츠 모드예요. %1$s와 함께라면 노멀 모드가 더 편안해요.</string>
+    <string name="guide_trip_started">%1$s와의 여행을 기록하기 시작했어요.</string>
+    <string name="guide_break_taken">휴식 완료! 다시 출발해요.</string>
+    <string name="guide_climate_applied">%1$s 공조를 조절했어요.</string>
+    <string name="climate_ok">%1$s에게 딱 좋은 온도예요.</string>
+    <string name="climate_unknown">실내 온도를 아직 못 읽었어요.</string>
+
+    <!-- Home -->
+    <string name="home_no_dog_title">함께 탈 반려견을 등록해 주세요</string>
+    <string name="home_no_dog_body">견종과 자리를 알려주면 온도·휴식·안전을 맞춤으로 챙겨요.</string>
+    <string name="home_create_profile">프로필 만들기</string>
+    <string name="home_aboard">탑승</string>
+    <string name="home_not_aboard">미탑승</string>
+    <string name="home_seat_fmt">자리: %1$s</string>
+    <string name="home_total_km_fmt">누적 발자국 %1$.1f km · %2$d회</string>
+    <string name="tile_temp_title">실내 온도</string>
+    <string name="tile_temp_band_fmt">적정 %1$.0f–%2$.0f°C</string>
+    <string name="tile_temp_target_fmt">설정 %1$.0f°C · 바람 %2$s</string>
+    <string name="tile_temp_apply">자동 조절</string>
+    <string name="tile_temp_apply_disabled">자동 조절은 Pleos 승인 후 제공</string>
+    <string name="apply_result_applied">조절 완료: %1$s</string>
+    <string name="apply_result_partial">일부만 적용됨: %1$s / 실패: %2$s</string>
+    <string name="apply_result_not_enabled">설정에서 실험 기능(차량 제어)을 켜면 실제로 조절해요.</string>
+    <string name="apply_result_nothing">조절할 것이 없어요.</string>
+    <string name="apply_result_error">차량 제어 호출에 실패했어요.</string>
+    <string name="tile_break_title">다음 휴식</string>
+    <string name="tile_break_countdown_fmt">%1$s 후</string>
+    <string name="tile_break_due">지금 쉬어 주세요</string>
+    <string name="tile_break_interval_fmt">%1$d분마다 휴식</string>
+    <string name="tile_break_no_trip">출발하면 휴식 타이머가 시작돼요</string>
+    <string name="tile_break_done">휴식 완료</string>
+    <string name="tile_navi_fmt">%1$s까지 %2$s · %3$.1f km</string>
+    <string name="tile_navi_none">경로 안내 없음</string>
+    <string name="tile_navi_rest_area_fmt">휴게소 %1$.0f km 앞</string>
+    <string name="tile_safety_title">안전 체크</string>
+    <string name="safety_ok">모두 안전해요</string>
+    <string name="safety_window">창문 많이 열림</string>
+    <string name="safety_belt">하네스 미착용</string>
+    <string name="safety_door">문 열림</string>
+    <string name="safety_sport">스포츠 모드</string>
+    <string name="safety_hvac_off">공조 꺼짐</string>
+    <string name="safety_not_on_seat">자리에 없음</string>
+    <string name="tile_score_title">편안함 지수</string>
+    <string name="tile_calm_title">진정 사운드</string>
+    <string name="tile_calm_body">저주파 노이즈로 불안을 낮춰요</string>
+    <string name="tile_trip_title">진행 중인 여행</string>
+    <string name="tile_trip_none">여행 없음</string>
+    <string name="tile_trip_start">여행 시작</string>
+    <string name="tile_trip_end">여행 종료</string>
+    <string name="tile_trip_stats_fmt">%1$.1f km · %2$s · 휴식 %3$d회</string>
+    <string name="trip_end_prompt_title">%1$s가 내렸나요?</string>
+    <string name="trip_end_prompt_body">10분 넘게 정차 중이에요. 여행을 마무리할까요?</string>
+    <string name="trip_end_mood_title">오늘 %1$s의 기분은?</string>
+    <string name="trip_end_note_hint">한 줄 메모 (선택)</string>
+    <string name="mood_happy">😊 신남</string>
+    <string name="mood_okay">😐 보통</string>
+    <string name="mood_stressed">😣 힘듦</string>
+    <string name="action_keep_driving">계속 운행</string>
+    <string name="action_end">종료</string>
+    <string name="action_cancel">취소</string>
+    <string name="action_save">저장</string>
+    <string name="action_delete">삭제</string>
+    <string name="moving">주행 중</string>
+    <string name="parked">정차</string>
+    <string name="soc_fmt">배터리 %1$d%%</string>
+    <string name="odometer_fmt">%1$.1f km</string>
+
+    <!-- Footprints -->
+    <string name="footprints_title">%1$s의 발자국</string>
+    <string name="footprints_empty">아직 기록된 여행이 없어요. 탑승을 켜고 출발하면 자동으로 기록돼요.</string>
+    <string name="footprints_summary_fmt">%1$d회 · %2$.1f km · %3$s</string>
+    <string name="footprint_item_fmt">%1$.1f km · %2$s · 휴식 %3$d회</string>
+    <string name="footprint_score_fmt">편안함 %1$d</string>
+    <string name="footprint_destination_fmt">→ %1$s</string>
+    <string name="footprint_timeline">타임라인</string>
+    <string name="event_trip_start">출발</string>
+    <string name="event_trip_end">도착</string>
+    <string name="event_break_suggested">휴식 권고</string>
+    <string name="event_break_taken">휴식</string>
+    <string name="event_brake_burst">급제동 반복</string>
+    <string name="event_sport_mode">스포츠 모드</string>
+    <string name="event_window_open">창문 열림</string>
+    <string name="event_belt_unbuckled">하네스 미착용</string>
+    <string name="event_door_open_at_stop">정차 중 문 열림</string>
+    <string name="event_temp_out_of_band">온도 벗어남</string>
+    <string name="event_climate_applied">공조 조절</string>
+    <string name="event_calm_on">진정 사운드 켬</string>
+    <string name="event_calm_off">진정 사운드 끔</string>
+    <string name="event_check_in">체크인</string>
+
+    <!-- Profile -->
+    <string name="profile_title">반려견 프로필</string>
+    <string name="profile_new">새 반려견</string>
+    <string name="profile_name">이름</string>
+    <string name="profile_breed">견종</string>
+    <string name="profile_traits">특성 (견종 기본값, 수정 가능)</string>
+    <string name="profile_size">크기</string>
+    <string name="profile_coat">털</string>
+    <string name="profile_brachy">단두종 (납작한 코)</string>
+    <string name="profile_age">나이</string>
+    <string name="profile_motion">멀미</string>
+    <string name="profile_weight">몸무게 (kg, 선택)</string>
+    <string name="profile_seat">주로 타는 자리</string>
+    <string name="profile_band_preview">적정 실내 온도 %1$.0f–%2$.0f°C · 휴식 %3$d분마다</string>
+    <string name="size_toy">초소형</string>
+    <string name="size_small">소형</string>
+    <string name="size_medium">중형</string>
+    <string name="size_large">대형</string>
+    <string name="coat_short">단모</string>
+    <string name="coat_double">이중모</string>
+    <string name="coat_long_single">장모</string>
+    <string name="coat_hairless">무모</string>
+    <string name="age_puppy">퍼피 (~1세)</string>
+    <string name="age_adult">성견</string>
+    <string name="age_senior">노령견 (8세+)</string>
+    <string name="motion_none">없음</string>
+    <string name="motion_mild">가끔</string>
+    <string name="motion_severe">자주</string>
+    <string name="active_dog">현재 선택</string>
+    <string name="select_dog">선택</string>
+
+    <!-- Settings -->
+    <string name="settings_title">설정 · 진단</string>
+    <string name="settings_control">차량 제어 (실험 기능)</string>
+    <string name="settings_control_body">자동 조절 버튼이 실제로 공조·창문을 제어해요. Pleos Playground에서 Vehicle Control 승인 전이므로 에뮬레이터 데모용이에요.</string>
+    <string name="settings_tts">Pleos 음성 안내</string>
+    <string name="settings_tts_body">끄면 알림음으로 안내해요.</string>
+    <string name="settings_sdk_status">SDK 연결 상태</string>
+    <string name="sdk_vehicle">Vehicle</string>
+    <string name="sdk_navi">NaviHelper</string>
+    <string name="sdk_tts">TextToSpeech</string>
+    <string name="sdk_location">FusedLocation</string>
+    <string name="status_unknown">대기</string>
+    <string name="status_connecting">연결 중</string>
+    <string name="status_ready">사용 가능</string>
+    <string name="status_unavailable">사용 불가</string>
+    <string name="settings_demo">데모 트리거</string>
+    <string name="settings_demo_body">발표 때 에뮬레이터 조작 없이 상황을 재현해요.</string>
+    <string name="demo_brake">급제동 발생</string>
+    <string name="demo_break">휴식 시간 도달</string>
+    <string name="demo_temp_hot">온도 27°C 가정</string>
+    <string name="demo_temp_cold">온도 16°C 가정</string>
+    <string name="demo_temp_clear">온도 가정 해제</string>
+    <string name="settings_about">Pleos Connect SDK · Vehicle %1$s · NaviHelper %2$s · TTS %3$s</string>
+    <string name="duration_h_m">%1$d시간 %2$d분</string>
+    <string name="duration_m">%1$d분</string>
+    <string name="breed_other_hint">믹스/기타는 특성을 직접 골라 주세요</string>
+    <string name="seat_driver">운전석</string>
 </resources>

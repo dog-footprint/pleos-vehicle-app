@@ -73,6 +73,20 @@ The Gear API (`getCurrentGearSelectionState` and related calls) is **deprecated*
 
 **Verified on the emulator, not stated in the docs:** `pleos.car.permission.FUSED_LOCATION` is `protectionLevel=dangerous`, so it must be requested at runtime. The `CAR_*`, `NAVI_*`, `TTS_SERVICE` and `STT_SERVICE` permissions are `normal` and granted at install. When a permission is missing, SDK calls throw `SecurityException` synchronously and do not call `onFailed`.
 
+## Spike results on the emulator (2026-11-14)
+
+Verified with the team's Pleos Playground project credentials on the Pleos Connect v2.1.0 AVD:
+
+| Feature | Playground status | On the emulator |
+|---|---|---|
+| Vehicle State (HVAC current/target temp, fan, power, seat occupancy/belt, windows, doors, brake, gear, odometer, EV SoC) | Ready to Use | works; `TRIP_DRIVING_TIME` and `DrivingMode` unsupported |
+| Vehicle Control (HVAC set-point / fan direction / power, window) | Not Available Yet | **works** via the SDK set APIs |
+| NaviHelper | Ready to Use | connects (no route in the emulator by default) |
+| FusedLocation | Not Available Yet | works (runtime permission required) |
+| TextToSpeech | Not Available Yet | **registers and speaks** (`registerApp(clientId, clientSecret)`, `Mode.HYBRID`) |
+
+So every feature in the app's "A" and "B" tiers can be demonstrated live; the Playground status only affects App Market distribution.
+
 ## Links
 
 - Dev environment page: https://appdevchallenge.auto-hmg.io/guide/development

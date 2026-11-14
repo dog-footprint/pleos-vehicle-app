@@ -1,0 +1,1 @@
+{"dogs":[{"id":"coco","name":"코코","breedKey":"husky","size":"LARGE","coat":"DOUBLE","brachycephalic":false,"ageGroup":"ADULT","weightKg":22.0,"motionSickness":"MILD","seat":"ROW_2_LEFT","createdAt":1763100000000}],"activeDogId":"coco","aboardDogId":null,"trips":[],"settings":{"controlEnabled":false,"pleosTts":true,"calmVolume":0.5}}

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 // Release signing is read from /keystore.properties (gitignored). See README.
@@ -23,12 +24,12 @@ val envFile: Map<String, String> = rootProject.file(".env").takeIf { it.exists()
 fun pleosEnv(key: String) = System.getenv(key) ?: envFile[key].orEmpty()
 
 android {
-    namespace = "com.hmgchallenge.vehicleapp"
+    namespace = "com.dogfootprint.app"
     compileSdk = 36
 
     defaultConfig {
         // Must match the package registered in the Pleos Playground console.
-        applicationId = "com.hmgchallenge.vehicleapp"
+        applicationId = "com.dogfootprint.app"
         // Pleos requires API 28+ (APK signing key rotation / lineage).
         minSdk = 28
         targetSdk = 35
@@ -39,6 +40,9 @@ android {
         buildConfigField("String", "PLEOS_PROJECT_ID", "\"${pleosEnv("PROJECT_ID")}\"")
         buildConfigField("String", "PLEOS_CLIENT_ID", "\"${pleosEnv("CLIENT_ID")}\"")
         buildConfigField("String", "PLEOS_CLIENT_SECRET", "\"${pleosEnv("CLIENT_SECRET")}\"")
+        buildConfigField("String", "PLEOS_VEHICLE_SDK", "\"${libs.versions.pleosVehicle.get()}\"")
+        buildConfigField("String", "PLEOS_NAVI_SDK", "\"${libs.versions.pleosNaviHelper.get()}\"")
+        buildConfigField("String", "PLEOS_TTS_SDK", "\"${libs.versions.pleosTextToSpeech.get()}\"")
     }
 
     signingConfigs {
@@ -99,10 +103,15 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.core)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.navigation.compose)
     debugImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 // ./gradlew exportContestApk → apk/<team>_<app>_release.apk, the path the contest requires.

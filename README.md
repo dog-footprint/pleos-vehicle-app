@@ -1,35 +1,50 @@
 # dog-footprint
 
-> One-line description of the app. (TODO)
+> 반려견의 견종·나이·자리에 맞춰 차량 실내 온도, 휴식 시간, 안전을 챙기고 매 드라이브를 "발자국"으로 기록하는 Pleos Connect 앱.
+> An in-vehicle dog-care app for Pleos Connect: breed-aware climate guidance, break reminders, safety checks, a calming
+> sound, and an automatic trip log ("footprints") — built for the
+> [현대자동차그룹 차량용 앱 개발 공모전](https://appdevchallenge.auto-hmg.io/).
 
-An in-vehicle app for the Pleos Connect (Android Automotive OS) platform, built for the
-[현대자동차그룹 차량용 앱 개발 공모전](https://appdevchallenge.auto-hmg.io/).
-Contest rules, SDK list and deadlines are summarized in [docs/CONTEST.md](docs/CONTEST.md).
+Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md).
 
 ## APK
 
 - Location: [`apk/dog-footprint_dog-footprint_release.apk`](apk/) (or the GitHub Release link: TODO)
-- Build: release build, signed, minSdk 28 / targetSdk 35
+- Build: release build, signed (v3), minSdk 28 / targetSdk 35
 
 ## How to run
 
-1. Start a **Pleos Connect v2.1.0** AVD (see *One-time setup* below), for example `emulator -avd Pleos_Connect`.
+1. Start a **Pleos Connect v2.1.0** AVD (see *One-time setup* below), e.g. `emulator -avd Pleos_Connect`.
 2. Install the APK:
    ```bash
    adb install -r apk/dog-footprint_dog-footprint_release.apk
    ```
 3. Open **dog-footprint** from the launcher. Allow the location permission prompt on first launch.
-4. To simulate vehicle signals (speed, battery, doors, …), use the emulator's
-   *Extended controls → Car data* panel or the Pleos vehicle emulator
-   ([guide](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/use-vehicle-emulator)).
+4. Create a dog profile (프로필 → 이름 + 견종 + 자리 → 저장), then on 홈 turn on **탑승**. The trip starts
+   automatically when the vehicle moves.
+5. To simulate vehicle signals, use the Pleos **Virtual Console**: `adb forward tcp:8088 tcp:8088` then open
+   http://127.0.0.1:8088/ — or script it with `scripts/vehicle-sim.sh` (see *Demo* below).
 
 ## Test environment
 
 | | |
 |---|---|
-| Emulator | Pleos Connect system image v2.1.0 (API 34, Automotive) |
+| Emulator | Pleos Connect system image v2.1.0 (API 34, Automotive, 2560×1440) |
 | Pleos SDKs | Vehicle 2.3.2, NaviHelper 3.0.5, TextToSpeech 3.3.1, SpeechToText 3.3.1, FusedLocation 1.1.3 |
 | Build | AGP 8.13.2, Gradle 8.14.6, Kotlin 2.2.21, JDK 21 (bytecode target 17), Jetpack Compose |
+
+## What it does
+
+| Feature | How | Pleos SDK |
+|---|---|---|
+| Dog profile → comfort band + break interval | breed presets (size, coat, flat-faced), age, motion sickness, usual seat | — |
+| Cabin temperature at the dog's seat vs. its band, recommendation text | HVAC current/target temperature, fan, power | Vehicle (CAR_CLIMATE) |
+| Auto-adjust climate (experimental, Settings toggle) | HVAC set-point / fan / direction, seat heater, window close when parked | Vehicle Control (not yet approved in Pleos Playground; works on the emulator) |
+| Break reminders (pre-alert + due), rest-area suggestion | odometer-based driving time; NaviHelper destination + TBT rest area | Vehicle (CAR_DRIVE), NaviHelper |
+| Safety checks: window open, harness unbuckled, door open, sport mode, hard-brake bursts | seat occupancy/belt, window & door position, drive mode, brake pedal | Vehicle |
+| Spoken guidance (Korean) with chime fallback | Pleos TTS, registered with the team's Client ID/Secret | TextToSpeech |
+| Calming sound | synthesized brown noise with a slow breathing envelope | — |
+| Footprints: per-trip distance, time, breaks, events, comfort score, mood | local DataStore | FusedLocation for coordinates |
 
 ---
 
@@ -37,45 +52,73 @@ Contest rules, SDK list and deadlines are summarized in [docs/CONTEST.md](docs/C
 
 ### One-time setup
 
-1. **Android Studio**: install it (`brew install --cask android-studio`) and point it at the existing SDK
-   in `~/Library/Android/sdk`. In *Settings → Build Tools → Gradle → Gradle JDK*, choose JDK 21.
-2. **Pleos emulator image**: in *Tools → SDK Manager → SDK Update Sites*, add a site named
-   `Pleos Connect System Image` with this URL:
+1. **Android Studio**: `brew install --cask android-studio`, point it at the SDK in `~/Library/Android/sdk`, and choose
+   JDK 21 under *Settings → Build Tools → Gradle → Gradle JDK*.
+2. **Pleos emulator image**: *Tools → SDK Manager → SDK Update Sites*, add `Pleos Connect System Image` with
    - Apple Silicon: `https://nexus-playground.pleos.ai/repository/raw-releases/connect-avd/2.x/crp-arm64-sys-img.xml`
    - Intel / Windows / Linux: `https://nexus-playground.pleos.ai/repository/raw-releases/connect-avd/2.x/crp-sys-img.xml`
 
-   Then, under *SDK Platforms*, check *Show Package Details* and install the
-   **Pleos Connect** image under Android API 34. You will be asked to accept the 42dot SDK license.
-3. **AVD**: open *Device Manager → Create*. Choose the **Automotive** form factor and the
-   *Pleos Connect v2.1.0* image. Set RAM to 4 GB and Boot to Cold.
-4. **Pleos Playground credentials**: copy `.env.example` to `.env` (gitignored) and fill in
-   `PROJECT_ID`, `CLIENT_ID`, `CLIENT_SECRET` and `CRN` from the team's project at
-   https://pleos.ai/playground/console/projects. The build exposes them as `BuildConfig.PLEOS_*`.
-   `CRN` is only needed on a rootable devbox target (`scripts/set-emulator-crn.sh`); the stock
-   Pleos Connect v2.1.0 AVD does not need it.
-5. **Release key**: run `scripts/create-release-keystore.sh`. It writes `release.jks` and
-   `keystore.properties`, both gitignored. Back up the key, because the app is tied to it.
+   then install the **Pleos Connect** image under Android API 34 (accept the 42dot SDK license).
+3. **AVD**: Device Manager → Create → **Automotive** form factor, *Pleos Connect v2.1.0* image, 4 GB RAM, Cold boot.
+   Name it `Pleos_Connect` so the scripts find it.
+4. **Pleos Playground credentials**: copy `.env.example` to `.env` (gitignored) and fill in `PROJECT_ID`, `CLIENT_ID`,
+   `CLIENT_SECRET` and `CRN` from https://pleos.ai/playground/console/projects. The build exposes them as
+   `BuildConfig.PLEOS_*`; TTS/STT need the client credentials. `CRN` is only for a rootable devbox
+   (`scripts/set-emulator-crn.sh`); the stock AVD does not need it.
+5. **Release key**: `scripts/create-release-keystore.sh` writes `release.jks` + `keystore.properties` (both gitignored).
+   Back the key up — the app identity is tied to it.
 
 ### Build from the terminal
 
 ```bash
-source scripts/env.sh        # pins JDK 21 + Android SDK on PATH (system JDK 26 is too new for AGP)
+source scripts/env.sh        # pins JDK 21 + Android SDK on PATH (the system JDK 26 is too new for AGP)
 ./gradlew installDebug       # build + install on the running emulator
+./gradlew testDebugUnitTest  # care-rule tests
 ./gradlew exportContestApk   # signed release → apk/<team>_<app>_release.apk
 ```
 
-Set `contest.teamName` and `contest.appName` in `gradle.properties` to control the APK file name.
+### Demo / scripted verification
+
+```bash
+scripts/vehicle-sim.sh forward                  # once per emulator boot (adb forward 8088)
+scripts/demo-seed.sh                            # debug builds: load scripts/demo-seed.json (코코 · 시베리안 허스키 · 뒷좌석 왼쪽)
+scripts/vehicle-sim.sh gear Drive
+scripts/vehicle-sim.sh odometer 12.5            # repeat with increasing values → "주행 중", trip starts if 탑승 is on
+scripts/vehicle-sim.sh hvac "power=1&ac=1&fan=5&driver_temp=27&passenger_temp=27"
+scripts/vehicle-sim.sh window rl 60             # → 창문 많이 열림
+scripts/vehicle-sim.sh brake 100; scripts/vehicle-sim.sh brake 0   # ×4 within 10 s → 급제동 반복
+scripts/vehicle-sim.sh seat rear_left true      # see the quirk below
+scripts/tap-text.sh "여행 종료"                  # taps any on-screen text (uiautomator)
+```
+
+Settings → 데모 트리거 reproduces the same situations without the console.
+
+### Emulator facts worth knowing (verified on Pleos Connect v2.1.0)
+
+- Apps run as **user 10** on AAOS: `run-as`/`pm grant` need `--user 10` (`run-as --user` is unsupported here, hence
+  the seed intent in `MainActivity`).
+- HVAC zones are multi-seat areas: current temperature is readable on `[ROW_1_LEFT, ROW_1_RIGHT, ROW_2_*]`, set-point on
+  `[ROW_1_LEFT]`/`[ROW_1_RIGHT]`, fan on `[ROW_1_LEFT, ROW_1_RIGHT]`, power on the all-cabin area. `CareEngine.watchZone`
+  resolves them from the SDK capability lists; never construct `SeatArea(ROW_2_LEFT)` for HVAC.
+- `TRIP_DRIVING_TIME` and `DrivingMode` are not supported by the emulator (handled; driving time is counted in-app).
+- Seat occupancy for ROW_2_LEFT reads as the **inverse** of the console's `rear_left` flag on this image.
+- Window position is reported 0–10 by the SDK (console uses 0–100 %).
+- The console only accepts writes while a browser-session heartbeat is alive; `vehicle-sim.sh` sends one before each write.
+- Pleos TTS, NaviHelper and FusedLocation all connect on the emulator with the team's credentials, even though the
+  Playground project lists them as "Not Available Yet".
 
 ### Code layout
 
 ```
-app/src/main/java/com/hmgchallenge/vehicleapp/
-├── MainActivity.kt
-├── pleos/                 # Flow-based wrappers around the Pleos SDKs
-│   ├── VehicleSource.kt   #   Vehicle SDK (odometer, EV state of charge, …)
-│   └── LocationSource.kt  #   FusedLocation SDK
-└── ui/                    # Compose UI + ViewModels
+app/src/main/java/com/dogfootprint/app/
+├── App.kt                 composition root (DataStore, SDK sources, CareEngine)
+├── MainActivity.kt        Compose host + debug seed intent
+├── data/                  AppData / DogProfile / Trip models, DataStore repository
+├── care/                  BreedPresets, Zones, ComfortRules (pure, unit-tested), CareEngine (trip + guidance brain)
+├── pleos/                 VehicleSource, NaviSource, LocationSource, VoiceGuide (Pleos TTS + chime), ClimateActuator
+├── audio/                 CalmingSoundPlayer
+└── ui/                    NavigationRail + Home / Footprints / Profile / Settings screens
 ```
 
-Before submitting, rename the `com.hmgchallenge.vehicleapp` package and application ID to match
-your Pleos Playground project.
+Before an App Market submission, remove the `CONTROL_CAR_*` permissions from the manifest unless Vehicle Control has
+been approved for the project.
