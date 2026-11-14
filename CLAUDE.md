@@ -20,6 +20,13 @@ Contest rules, deadlines, SDK coordinates and permissions are in `docs/CONTEST.m
 - Screenshots: `adb exec-out screencap -p > file.png`. The app pane is the right ~2/3 of the screen.
 - Known emulator facts: no `TRIP_DRIVING_TIME` / `DrivingMode`; HVAC areas are multi-seat (see README); ROW_2_LEFT occupancy is inverted vs the console's `rear_left`; window position is 0–10; Pleos TTS/Navi/Location connect fine with the `.env` credentials.
 
+## Design (Pleos)
+
+- Use `ui/pleos/` only: `Pleos.colors`, `PleosType`, `PleosDims`, `PleosButton`/`PleosToggleButton`/`PleosIconButton`/`PleosListRow`/`PleosSwitch`/`PleosPopup`/`PleosStatusLine`. Do not reach for Material cards, chips, elevation or `MaterialTheme.colorScheme` directly.
+- Token values come from the official Figma files (see `scripts/pleos-tokens/README.md`); add new values there with their source, don't invent them.
+- Driving rule: while `state.moving` a screen shows one number/one status/at most two buttons, no text entry, no long lists. Warnings are icon + text + fixed position, never colour alone. Icons are the 48 px outline set from `scripts/fetch-icons.sh` (`ic_<material_symbol>.xml`); no emoji in UI strings.
+- Home has three states (parked / driving / `petAlone`); keep them distinct when adding features.
+
 ## Conventions
 
 - Pleos SDK versions are pinned in `gradle/libs.versions.toml`; use the `libs.bundles.pleos` bundle.

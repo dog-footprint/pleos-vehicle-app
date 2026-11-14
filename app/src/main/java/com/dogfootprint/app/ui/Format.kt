@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.dogfootprint.app.R
 import com.dogfootprint.app.care.BreedPresets
+import com.dogfootprint.app.care.SafetyFlag
 import com.dogfootprint.app.data.AgeGroup
 import com.dogfootprint.app.data.CoatType
 import com.dogfootprint.app.data.DogSeat
@@ -83,6 +84,33 @@ val Mood.labelRes: Int
         Mood.HAPPY -> R.string.mood_happy
         Mood.OKAY -> R.string.mood_okay
         Mood.STRESSED -> R.string.mood_stressed
+    }
+
+val Mood.iconRes: Int
+    get() = when (this) {
+        Mood.HAPPY -> R.drawable.ic_sentiment_satisfied
+        Mood.OKAY -> R.drawable.ic_sentiment_neutral
+        Mood.STRESSED -> R.drawable.ic_sentiment_dissatisfied
+    }
+
+val SafetyFlag.labelRes: Int
+    get() = when (this) {
+        SafetyFlag.WINDOW_OPEN -> R.string.safety_window
+        SafetyFlag.BELT_UNBUCKLED -> R.string.safety_belt
+        SafetyFlag.DOOR_OPEN -> R.string.safety_door
+        SafetyFlag.SPORT_MODE -> R.string.safety_sport
+        SafetyFlag.HVAC_OFF -> R.string.safety_hvac_off
+        SafetyFlag.NOT_ON_SEAT -> R.string.safety_not_on_seat
+    }
+
+val SafetyFlag.iconRes: Int
+    get() = when (this) {
+        SafetyFlag.WINDOW_OPEN -> R.drawable.ic_sensor_window
+        SafetyFlag.BELT_UNBUCKLED -> R.drawable.ic_airline_seat_recline_normal
+        SafetyFlag.DOOR_OPEN -> R.drawable.ic_door_open
+        SafetyFlag.SPORT_MODE -> R.drawable.ic_speed
+        SafetyFlag.HVAC_OFF -> R.drawable.ic_mode_fan
+        SafetyFlag.NOT_ON_SEAT -> R.drawable.ic_pets
     }
 
 val EventType.labelRes: Int

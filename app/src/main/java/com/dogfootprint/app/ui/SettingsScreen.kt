@@ -4,99 +4,85 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.dogfootprint.app.BuildConfig
 import com.dogfootprint.app.R
 import com.dogfootprint.app.care.CareState
 import com.dogfootprint.app.pleos.SdkStatus
+import com.dogfootprint.app.ui.pleos.ButtonSize
+import com.dogfootprint.app.ui.pleos.Pleos
+import com.dogfootprint.app.ui.pleos.PleosButton
+import com.dogfootprint.app.ui.pleos.PleosDims
+import com.dogfootprint.app.ui.pleos.PleosListRow
+import com.dogfootprint.app.ui.pleos.PleosSwitch
+import com.dogfootprint.app.ui.pleos.PleosType
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsScreen(vm: CareViewModel, state: CareState) {
+    val c = Pleos.colors
     val settings = state.data.settings
     val d = state.diagnostics
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium)
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = PleosDims.space40, vertical = PleosDims.space32)) {
+        Text(stringResource(R.string.settings_title), style = PleosType.titleLarge, color = c.textPrimary)
+        Spacer(Modifier.height(PleosDims.space24))
 
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                ToggleRow(stringResource(R.string.settings_control), stringResource(R.string.settings_control_body), settings.controlEnabled) { on ->
-                    vm.updateSettings { it.copy(controlEnabled = on) }
-                }
-                ToggleRow(stringResource(R.string.settings_tts), stringResource(R.string.settings_tts_body), settings.pleosTts) { on ->
-                    vm.updateSettings { it.copy(pleosTts = on) }
-                }
+        PleosListRow(stringResource(R.string.settings_control), subtitle = stringResource(R.string.settings_control_body), icon = R.drawable.ic_mode_fan) {
+            PleosSwitch(settings.controlEnabled, { on -> vm.updateSettings { it.copy(controlEnabled = on) } })
+        }
+        PleosListRow(stringResource(R.string.settings_tts), subtitle = stringResource(R.string.settings_tts_body), icon = R.drawable.ic_volume_up) {
+            PleosSwitch(settings.pleosTts, { on -> vm.updateSettings { it.copy(pleosTts = on) } })
+        }
+
+        run {
+            Spacer(Modifier.height(PleosDims.space40))
+            Text(stringResource(R.string.settings_developer), style = PleosType.titleSmall, color = c.textPrimary)
+            Text(stringResource(R.string.settings_demo_body), style = PleosType.bodyMedium, color = c.textTertiary, modifier = Modifier.padding(top = PleosDims.space4, bottom = PleosDims.space16))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12), verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
+                PleosButton(stringResource(R.string.demo_brake), onClick = vm::demoBrakeBurst, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_break), onClick = vm::demoBreakDue, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_temp_hot), onClick = { vm.demoTemp(27f) }, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_temp_cold), onClick = { vm.demoTemp(16f) }, size = ButtonSize.Small, primary = false)
+                PleosButton(stringResource(R.string.demo_temp_clear), onClick = { vm.demoTemp(null) }, size = ButtonSize.Small, primary = false, enabled = state.demoTemp != null)
+                PleosButton(stringResource(R.string.demo_pet_alone), onClick = vm::demoPetAlone, size = ButtonSize.Small, primary = false)
             }
         }
 
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.settings_sdk_status), style = MaterialTheme.typography.titleMedium)
-                StatusRow(stringResource(R.string.sdk_vehicle), d.vehicle, d.vehicleDetail)
-                StatusRow(stringResource(R.string.sdk_navi), d.navi, state.navi.lastError)
-                StatusRow(stringResource(R.string.sdk_tts), d.tts, d.ttsDetail)
-                StatusRow(stringResource(R.string.sdk_location), d.location, null)
-                Text(
-                    stringResource(R.string.settings_about, BuildConfig.PLEOS_VEHICLE_SDK, BuildConfig.PLEOS_NAVI_SDK, BuildConfig.PLEOS_TTS_SDK),
-                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-        }
+        Spacer(Modifier.height(PleosDims.space40))
+        Text(stringResource(R.string.settings_sdk_status), style = PleosType.titleSmall, color = c.textPrimary, modifier = Modifier.padding(bottom = PleosDims.space8))
+        StatusRow(stringResource(R.string.sdk_vehicle), d.vehicle, d.vehicleDetail)
+        StatusRow(stringResource(R.string.sdk_navi), d.navi, state.navi.lastError)
+        StatusRow(stringResource(R.string.sdk_tts), d.tts, d.ttsDetail)
+        StatusRow(stringResource(R.string.sdk_location), d.location, null, divider = false)
+        Text(
+            stringResource(R.string.settings_about, BuildConfig.PLEOS_VEHICLE_SDK, BuildConfig.PLEOS_NAVI_SDK, BuildConfig.PLEOS_TTS_SDK),
+            style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space16),
+        )
+        Text(stringResource(R.string.voice_hint), style = PleosType.labelMedium, color = c.textQuaternary, modifier = Modifier.padding(top = PleosDims.space8))
 
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.settings_demo), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.settings_demo_body), style = MaterialTheme.typography.bodyMedium)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = vm::demoBrakeBurst) { Text(stringResource(R.string.demo_brake)) }
-                    OutlinedButton(onClick = vm::demoBreakDue) { Text(stringResource(R.string.demo_break)) }
-                    OutlinedButton(onClick = { vm.demoTemp(27f) }) { Text(stringResource(R.string.demo_temp_hot)) }
-                    OutlinedButton(onClick = { vm.demoTemp(16f) }) { Text(stringResource(R.string.demo_temp_cold)) }
-                    OutlinedButton(onClick = { vm.demoTemp(null) }, enabled = state.demoTemp != null) { Text(stringResource(R.string.demo_temp_clear)) }
-                }
-            }
-        }
     }
 }
 
 @Composable
-private fun ToggleRow(title: String, body: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Switch(checked = checked, onCheckedChange = onChange, modifier = Modifier.padding(start = 16.dp))
+private fun StatusRow(name: String, status: SdkStatus, detail: String?, divider: Boolean = true) {
+    val c = Pleos.colors
+    val (icon, tint) = when (status) {
+        SdkStatus.READY -> R.drawable.ic_check_circle to c.textPrimary
+        SdkStatus.CONNECTING -> R.drawable.ic_schedule to c.textTertiary
+        SdkStatus.UNAVAILABLE -> R.drawable.ic_cancel to c.negative
+        SdkStatus.UNKNOWN -> R.drawable.ic_info to c.textQuaternary
     }
-}
-
-@Composable
-private fun StatusRow(name: String, status: SdkStatus, detail: String?) {
-    val color = when (status) {
-        SdkStatus.READY -> StatusColors.good
-        SdkStatus.CONNECTING -> StatusColors.warn
-        SdkStatus.UNAVAILABLE -> StatusColors.bad
-        SdkStatus.UNKNOWN -> Color.Gray
-    }
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(end = 16.dp))
-        Text(stringResource(status.labelRes), style = MaterialTheme.typography.bodyLarge, color = color)
-        detail?.let { Text("  · $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-    }
+    PleosListRow(
+        title = "$name  ·  " + stringResource(status.labelRes),
+        subtitle = detail?.takeIf { status == SdkStatus.UNAVAILABLE }?.take(120), icon = icon, iconTint = tint, divider = divider,
+    )
 }

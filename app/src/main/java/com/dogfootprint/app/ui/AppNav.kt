@@ -3,33 +3,25 @@ package com.dogfootprint.app.ui
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -43,22 +35,32 @@ import androidx.navigation.compose.rememberNavController
 import com.dogfootprint.app.R
 import com.dogfootprint.app.pleos.GuidePriority
 import com.dogfootprint.app.pleos.LocationSource
+import com.dogfootprint.app.ui.pleos.Pleos
+import com.dogfootprint.app.ui.pleos.PleosDims
+import com.dogfootprint.app.ui.pleos.PleosIcon
+import com.dogfootprint.app.ui.pleos.PleosIconButton
+import com.dogfootprint.app.ui.pleos.PleosType
 import kotlinx.coroutines.delay
 
 private const val BANNER_MS = 8_000L
 
-private enum class Route(val path: String, val labelRes: Int, val icon: ImageVector) {
-    HOME("home", R.string.nav_home, Icons.Filled.Home),
-    FOOTPRINTS("footprints", R.string.nav_footprints, Icons.Filled.Favorite),
-    PROFILE("profile", R.string.nav_profile, Icons.Filled.Person),
-    SETTINGS("settings", R.string.nav_settings, Icons.Filled.Settings),
+private enum class Route(val path: String, val labelRes: Int, val icon: Int) {
+    NOW("now", R.string.nav_now, R.drawable.ic_thermostat),
+    FOOTPRINTS("footprints", R.string.nav_footprints, R.drawable.ic_footprint),
+    PROFILE("profile", R.string.nav_profile, R.drawable.ic_pets),
+    SETTINGS("settings", R.string.nav_settings, R.drawable.ic_settings),
 }
 
+/**
+ * Layout follows the Pleos "빠른 설정" pattern: a menu column of icon+label rows (selected row filled)
+ * and a content area. The menu sits on the driver's side of the app window.
+ */
 @Composable
 fun DogFootprintApp(vm: CareViewModel) {
     val state by vm.state.collectAsStateWithLifecycle()
     val nav = rememberNavController()
     val context = LocalContext.current
+    val c = Pleos.colors
 
     val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) vm.startLocation()
@@ -68,30 +70,41 @@ fun DogFootprintApp(vm: CareViewModel) {
         if (granted) vm.startLocation() else permissionLauncher.launch(LocationSource.PERMISSION)
     }
 
-    Row(Modifier.fillMaxSize()) {
+    Row(Modifier.fillMaxSize().background(c.background)) {
         val backStack by nav.currentBackStackEntryAsState()
         val current = backStack?.destination
-        NavigationRail(Modifier.fillMaxHeight()) {
-            Text("🐾", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(vertical = 20.dp))
+        Column(Modifier.width(360.dp).fillMaxHeight().background(c.surface)) {
+            Text(
+                stringResource(R.string.app_name), style = PleosType.labelMedium, color = c.textTertiary,
+                modifier = Modifier.padding(start = PleosDims.space32, top = PleosDims.space24, bottom = PleosDims.space8),
+            )
             Route.entries.forEach { route ->
-                NavigationRailItem(
-                    selected = current?.hierarchy?.any { it.route == route.path } == true,
-                    onClick = {
-                        nav.navigate(route.path) {
-                            popUpTo(nav.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
+                val selected = current?.hierarchy?.any { it.route == route.path } == true
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .background(if (selected) c.buttonFilled else c.surface)
+                        .clickable {
+                            nav.navigate(route.path) {
+                                popUpTo(nav.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
                         }
-                    },
-                    icon = { Icon(route.icon, contentDescription = null) },
-                    label = { Text(stringResource(route.labelRes)) },
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
+                        .padding(horizontal = PleosDims.space32),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val fg = if (selected) c.onButtonFilled else c.textPrimary
+                    PleosIcon(route.icon, fg)
+                    Spacer(Modifier.width(PleosDims.space24))
+                    Text(stringResource(route.labelRes), style = PleosType.bodyLargeStrong, color = fg)
+                }
             }
         }
         Box(Modifier.weight(1f).fillMaxHeight()) {
-            NavHost(nav, startDestination = Route.HOME.path) {
-                composable(Route.HOME.path) { HomeScreen(vm, state, onCreateProfile = { nav.navigate(Route.PROFILE.path) }) }
+            NavHost(nav, startDestination = Route.NOW.path) {
+                composable(Route.NOW.path) { HomeScreen(vm, state, onCreateProfile = { nav.navigate(Route.PROFILE.path) }) }
                 composable(Route.FOOTPRINTS.path) { FootprintsScreen(state) }
                 composable(Route.PROFILE.path) { ProfileScreen(vm, state) }
                 composable(Route.SETTINGS.path) { SettingsScreen(vm, state) }
@@ -99,36 +112,30 @@ fun DogFootprintApp(vm: CareViewModel) {
 
             state.banner?.let { banner ->
                 LaunchedEffect(banner.at) { delay(BANNER_MS); vm.dismissBanner() }
-                val container = when (banner.priority) {
-                    GuidePriority.INFO -> MaterialTheme.colorScheme.secondaryContainer
-                    GuidePriority.WARN -> MaterialTheme.colorScheme.tertiaryContainer
-                    GuidePriority.ALERT -> MaterialTheme.colorScheme.errorContainer
+                val (icon, tint) = when (banner.priority) {
+                    GuidePriority.INFO -> R.drawable.ic_info to c.textPrimary
+                    GuidePriority.WARN -> R.drawable.ic_warning to c.negative
+                    GuidePriority.ALERT -> R.drawable.ic_error to c.negative
                 }
-                Card(
-                    modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp, start = 32.dp, end = 32.dp).fillMaxWidth(0.8f),
-                    colors = CardDefaults.cardColors(containerColor = container),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                // System-notification style strip: fixed position (top of the app window), icon + text.
+                Row(
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(horizontal = PleosDims.space40, vertical = PleosDims.space24)
+                        .fillMaxWidth()
+                        .clip(PleosDims.radiusSmall)
+                        .background(if (c.isDark) c.surfaceHigh else c.surface)
+                        .padding(start = PleosDims.space32, end = PleosDims.space16, top = PleosDims.space20, bottom = PleosDims.space20),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(Modifier.padding(horizontal = 24.dp, vertical = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("🐶", style = MaterialTheme.typography.headlineSmall)
-                        Text(banner.text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).padding(horizontal = 16.dp))
-                        TextButton(onClick = vm::dismissBanner) { Text("✕") }
-                    }
+                    PleosIcon(icon, tint)
+                    Spacer(Modifier.width(PleosDims.space24))
+                    Text(banner.text, style = PleosType.bodyLargeStrong, color = c.textPrimary, modifier = Modifier.weight(1f))
+                    PleosIconButton(R.drawable.ic_close, onClick = vm::dismissBanner, small = true)
                 }
             }
 
             TripDialogs(vm, state)
-        }
-    }
-}
-
-@Composable
-fun EmptyDogCard(onCreateProfile: () -> Unit) {
-    Card(Modifier.fillMaxWidth().padding(32.dp)) {
-        Column(Modifier.padding(32.dp)) {
-            Text(stringResource(R.string.home_no_dog_title), style = MaterialTheme.typography.headlineSmall)
-            Text(stringResource(R.string.home_no_dog_body), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp, bottom = 24.dp))
-            Button(onClick = onCreateProfile) { Text(stringResource(R.string.home_create_profile)) }
         }
     }
 }

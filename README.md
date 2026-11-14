@@ -100,8 +100,8 @@ Pleos TTS voice and the calming sound are real). It is produced entirely by scri
 change:
 
 ```bash
-scripts/record-demo.sh build/demo        # cold-starts the app, seeds 코코, drives the scenario, records 2 segments + scenes.json
-scripts/make-demo-video.sh build/demo docs/demo/dog-footprint-demo.mp4   # concat, Korean caption overlays, loudness-normalised audio
+scripts/record-demo.sh build/demo        # night mode, cold-starts the app, seeds 코코, drives the scenario, records 2 segments + scenes.json
+scripts/make-demo-video.sh build/demo docs/demo/dog-footprint-demo.mp4   # concat, Korean caption strip below the video, loudness-normalised audio
 ```
 
 The emulator's recorder stops at 180 s per file, hence the two segments. Captions live in `record-demo.sh` next to each scene.
@@ -119,6 +119,21 @@ The emulator's recorder stops at 180 s per file, hence the two segments. Caption
 - The console only accepts writes while a browser-session heartbeat is alive; `vehicle-sim.sh` sends one before each write.
 - Pleos TTS, NaviHelper and FusedLocation all connect on the emulator with the team's credentials, even though the
   Playground project lists them as "Not Available Yet".
+
+### Design system
+
+The UI follows the Pleos Connect design guide, with values read directly from the official Figma files
+(`scripts/pleos-tokens/`): `ui/pleos/PleosTokens.kt` holds the Hyundai light/dark colours, type scale, spacing and
+component sizes; `ui/pleos/PleosComponents.kt` implements the handful of Pleos components the app uses (basic / toggle /
+icon buttons, list rows, switch, popup, notification strip). Rules applied on top of the guide:
+
+- One glanceable fact per screen while driving — on 지금 it is the temperature at the dog's seat (`Driving/Speed` scale)
+  plus a one-word verdict with an icon; driver side (left of the app window) carries the value and at most two buttons.
+- Three states: parked (full UI), driving (summary only, no text entry, no long lists), **pet alone** (parked + 탑승 +
+  driver's door opened and closed → cabin temperature, climate state and elapsed time, with spoken alerts).
+- One accent (`informative/positive` blue) for state/actions, one warning colour (`negative` red) always paired with an
+  icon and a fixed position; dark theme follows the vehicle's night mode. Icons are Material Symbols Outlined 48 px
+  (`scripts/fetch-icons.sh`), a single thin-line set like Pleos'. No emoji, gradients, shadows or card grids.
 
 ### Code layout
 

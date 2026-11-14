@@ -27,11 +27,10 @@ for s in data["scenes"]:
     k = s["segment"]
     scenes.append({**s, "start": round(offsets[k] + min(s["start"], seg_dur[k]), 2)})
 total = sum(seg_dur)
-W, H = 2560, 1440
-PANE_X = 853                       # app pane starts here; the left third is the Pleos vehicle panel
-BAND_Y, BAND_H = 1110, 200         # just above the Pleos climate bar
-font = ImageFont.truetype("/System/Library/Fonts/AppleSDGothicNeo.ttc", 40)
-MAX_W = (W - 40) - (PANE_X + 84) - 44
+# Captions live in a strip BELOW the video (output 1920x1200) so they never cover the app's buttons.
+W, H = 1920, 120
+font = ImageFont.truetype("/System/Library/Fonts/AppleSDGothicNeo.ttc", 36)
+MAX_W = W - 2 * 72
 
 def wrap_px(text):
     lines, cur = [], ""
@@ -42,18 +41,17 @@ def wrap_px(text):
         else:
             lines.append(cur); cur = word
     if cur: lines.append(cur)
-    return lines[:3]
+    return lines
 filters = []
 for i, s in enumerate(scenes):
     end = scenes[i + 1]["start"] if i + 1 < len(scenes) else total
-    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    img = Image.new("RGBA", (W, H), (19, 20, 23, 255))
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle((PANE_X + 40, BAND_Y, W - 40, BAND_Y + BAND_H), radius=28, fill=(20, 18, 16, 215))
-    lines = wrap_px(s["caption"])
-    y = BAND_Y + (BAND_H - 52 * len(lines)) // 2
+    lines = wrap_px(s["caption"])[:2]
+    y = (H - 48 * len(lines)) // 2
     for line in lines:
-        d.text((PANE_X + 84, y), line, font=font, fill=(255, 248, 240, 255))
-        y += 52
+        d.text((72, y), line, font=font, fill=(255, 255, 255, 255))
+        y += 48
     path = f"{indir}/captions/{i:02d}.png"
     img.save(path)
     filters.append((path, s["start"], end))
@@ -62,14 +60,15 @@ for i, s in enumerate(scenes):
 seg_inputs = " ".join(f"-i {indir}/demo-{k}.webm" for k in range(n_seg))
 cap_inputs = " ".join(f"-i {p}" for p, _, _ in filters)
 # The emulator's capture is quiet (TTS peaks ≈ -27 dB), so normalise loudness for playback on a laptop/projector.
-chain = ["".join(f"[{k}:v][{k}:a]" for k in range(n_seg)) + f"concat=n={n_seg}:v=1:a=1[cv][ca]", "[ca]loudnorm=I=-16:TP=-1.5:LRA=11[aout]"]
-prev = "[cv]"
+chain = ["".join(f"[{k}:v][{k}:a]" for k in range(n_seg)) + f"concat=n={n_seg}:v=1:a=1[cv][ca]", "[ca]loudnorm=I=-16:TP=-1.5:LRA=11[aout]",
+         "[cv]scale=1920:1080:flags=lanczos,pad=1920:1200:0:0:color=#131417[base]"]
+prev = "[base]"
 for n, (_, a, b) in enumerate(filters):
     idx = n_seg + n
     out = f"[v{n}]"
-    chain.append(f"{prev}[{idx}:v]overlay=0:0:enable='between(t,{a},{b})'{out}")
+    chain.append(f"{prev}[{idx}:v]overlay=0:1080:enable='between(t,{a},{b})'{out}")
     prev = out
-chain.append(f"{prev}scale=1920:1080:flags=lanczos,format=yuv420p[vout]")
+chain.append(f"{prev}format=yuv420p[vout]")
 open(f"{indir}/filter.txt", "w").write(";".join(chain))
 open(f"{indir}/inputs.txt", "w").write(seg_inputs + " " + cap_inputs)
 print(f"{n_seg} segments ({total:.1f} s), {len(filters)} captions")

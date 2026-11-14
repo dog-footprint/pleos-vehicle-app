@@ -39,6 +39,7 @@ class CareViewModel(private val app: App) : ViewModel() {
     fun demoBrakeBurst() = engine.demoBrakeBurst()
     fun demoBreakDue() = engine.demoBreakDue()
     fun demoTemp(t: Float?) = engine.setDemoTemp(t)
+    fun demoPetAlone() = engine.demoPetAlone()
 
     companion object {
         fun factory(app: App): ViewModelProvider.Factory = viewModelFactory { initializer { CareViewModel(app) } }

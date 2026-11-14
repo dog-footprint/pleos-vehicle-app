@@ -45,6 +45,7 @@ private const val TAG = "DogFootprint"
 private const val TICK_MS = 1_000L
 private const val PERSIST_EVERY_MS = 30_000L
 private const val FAN_DIRECTION_POLL_MS = 30_000L
+private const val PET_ALONE_GUIDE_COOLDOWN_MS = 5 * 60_000L
 
 data class VehicleSnapshot(
     val odometerKm: Float? = null,
@@ -63,6 +64,8 @@ data class VehicleSnapshot(
     val windowPositions: Map<WindowValue, Int> = emptyMap(),
     val windowMax: Int? = null,
     val doorPositions: Map<DoorValue, Int> = emptyMap(),
+    /** Driver's door (ROW_1_LEFT) — used to notice the driver leaving the dog in a parked car. */
+    val driverDoorOpen: Boolean? = null,
     val brakePressed: Boolean? = null,
     val drivingMode: DrivingModeType? = null,
     val gearPark: Boolean? = null,
@@ -107,6 +110,9 @@ data class CareState(
     val calmOn: Boolean = false,
     val banner: Guidance? = null,
     val askTripEnd: Boolean = false,
+    /** Parked, dog on board, driver's door opened and closed → the dog is alone in the car. */
+    val petAlone: Boolean = false,
+    val petAloneSince: Long? = null,
     val diagnostics: Diagnostics = Diagnostics(),
     val demoTemp: Float? = null,
 ) {
@@ -155,6 +161,9 @@ class CareEngine(
     private var lastBreakPhase = BreakPhase.NONE
     private var restAreaSuggestedAtKm: Double? = null
     private var demoTemp: Float? = null
+    private var driverDoorCycled = false
+    private var petAloneSince: Long? = null
+    private var lastPetAloneGuideAt: Long? = null
 
     fun start() {
         if (started) return
@@ -178,6 +187,7 @@ class CareEngine(
         watch("evStateOfCharge", vehicle.evStateOfCharge()) { v -> snap.update { it.copy(soc = v) } }
         watch("drivingMode", vehicle.drivingMode()) { v -> snap.update { it.copy(drivingMode = v) } }
         watch("gear", vehicle.gear()) { v -> snap.update { it.copy(gearPark = v == VehicleGear.GEAR_PARK) } }
+        watch("driverDoor", vehicle.doorPosition(DoorArea(DoorValue.ROW_1_LEFT))) { v -> snap.update { it.copy(driverDoorOpen = v > 0) } }
         watch("brakePedal", vehicle.brakePedal()) { pressed ->
             snap.update { it.copy(brakePressed = pressed) }
             if (brakeDetector.onPedal(pressed, clock(), motion.moving)) onBrakeBurst()
@@ -291,6 +301,16 @@ class CareEngine(
         val interval = s.breakIntervalMin ?: s.dog?.let { breakIntervalMin(it, s.heatAlert) } ?: BREAK_ADULT_MIN
         _state.update { it.copy(drivenSinceBreakSec = interval * 60) }
     }
+    /** Demo: pretend the driver got out while the dog stayed (parked + 탑승 required). */
+    fun demoPetAlone() {
+        val s = _state.value
+        if (s.dog == null) return
+        if (!s.aboard) setAboard(true)
+        driverDoorCycled = true
+        petAloneSince = clock()
+        lastPetAloneGuideAt = null
+    }
+
     fun setDemoTemp(t: Float?) {
         demoTemp = t
         // Skip the out-of-band grace/cooldown so the guidance fires on the next tick.
@@ -481,6 +501,25 @@ class CareEngine(
             outOfBandSince = null
         }
 
+        // Pet alone: parked + dog on board + the driver's door opened and closed again.
+        if (moving || !s.aboard || dog == null) {
+            driverDoorCycled = false; petAloneSince = null
+        } else {
+            if (v.driverDoorOpen == true) driverDoorCycled = true
+            else if (driverDoorCycled && v.driverDoorOpen == false && petAloneSince == null) petAloneSince = now
+        }
+        val petAlone = petAloneSince != null
+        if (petAlone && dog != null) {
+            val risky = v.hvacPower == false || (plan != null && plan.verdict != ClimateVerdict.OK && plan.verdict != ClimateVerdict.UNKNOWN)
+            val cooled = lastPetAloneGuideAt?.let { now - it >= PET_ALONE_GUIDE_COOLDOWN_MS } ?: true
+            if (risky && cooled) {
+                lastPetAloneGuideAt = now
+                val text = if (v.hvacPower == false) context.getString(R.string.guide_pet_alone_hvac_off, dog.name)
+                else context.getString(R.string.guide_pet_alone_temp, dog.name, zoneTemp ?: 0f)
+                guide(text, GuidePriority.ALERT)
+            }
+        }
+
         trip = trip?.let { t -> t.copy(comfortScore = comfortScore(t.events.groupingBy { e -> e.type }.eachCount())) }
         if (trip != null && now - lastPersistAt >= PERSIST_EVERY_MS) {
             lastPersistAt = now
@@ -493,6 +532,7 @@ class CareEngine(
                 vehicle = v.copy(zoneTemp = zoneTemp), moving = moving, band = band, climate = plan, heatAlert = heat,
                 trip = trip, breakIntervalMin = interval, drivenSinceBreakSec = drivenSinceBreak, breakPhase = phase,
                 restAreaSuggested = suggestRest, safety = flags, askTripEnd = askEnd, demoTemp = demoTemp,
+                petAlone = petAlone, petAloneSince = petAloneSince,
             )
         }
     }
