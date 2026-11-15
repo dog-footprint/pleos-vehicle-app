@@ -9,7 +9,7 @@ ICONS=(thermostat footprint pets directions_car door_open sensor_window speed wa
   mode_fan ac_unit sunny check_circle close chevron_right add edit delete play_arrow stop mic schedule
   battery_charging_full local_parking airline_seat_recline_normal lock volume_up home list navigation
   local_cafe route graphic_eq monitor_weight error cancel sentiment_satisfied sentiment_neutral sentiment_dissatisfied
-  pause health_and_safety timer radio_button_unchecked)
+  pause health_and_safety timer radio_button_unchecked badge)
 ok=0; fail=()
 for n in "${ICONS[@]}"; do
   url="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/$n/default/48px.svg"

@@ -40,7 +40,7 @@ tap() {                   # tap <text> [x y]: uiautomator dumps take ~4 s and so
   echo "!! tap '$1' not found"
 }
 # Vertical GNB: 140 wide at x=853, buttons 124 high from y=96+24 with 8 px gaps → centres 182/314/446 (Settings 578 is never tapped).
-rail() { case $1 in 홈|지금) adb shell input tap 923 182 ;; 발자국) adb shell input tap 923 314 ;; 프로필) adb shell input tap 923 446 ;; esac; }
+rail() { case $1 in 홈|지금|케어) adb shell input tap 923 182 ;; 발자국) adb shell input tap 923 314 ;; 프로필) adb shell input tap 923 446 ;; esac; }
 ODO=0
 drive_loop() {            # ≈60 km/h: 0.05 km every 3 s
   while true; do ODO=$(python3 -c "print(round($ODO + 0.05, 2))"); $V odometer "$ODO" >/dev/null || true; sleep 3; done
@@ -163,7 +163,7 @@ prepare() {               # bring the app to the state scene N expects, without 
   local n=$1
   seed
   if [[ $n -ge 4 ]]; then tap "태우기"; sleep 3; tap "1시간 전"; sleep 2; fi
-  if [[ $n -ge 5 ]]; then demo belt_on; sleep 1; fi
+  if [[ $n -ge 5 ]]; then tap "하네스 착용 확인"; sleep 1; fi
   if [[ $n -ge 6 && $n -le 8 ]]; then drive_start; sleep 8; fi
   if [[ $n -ge 9 ]]; then drive_start; sleep 62; demo hot; sleep 5; drive_stop; sleep 3; fi   # ≥ 1 km, or the trip is not recorded (no check-in)
   if [[ $n -ge 10 ]]; then $V door fl 1 >/dev/null; sleep 4; fi
@@ -181,7 +181,7 @@ s2()  { scene 2 profile "프로필: 견종을 바꾸면 적정 온도가 바뀝�
         adb shell input tap 1920 509; sleep 0.8; adb shell input tap 2065 509; sleep 0.8; adb shell input tap 2209 585; sleep 0.8; rail 홈; sleep 0.5; }
 s3()  { scene 3 board "코코 태우기 → 마지막 식사 시간 (1시간 전) · 탑승 직후: 출발 전에 하네스를 채워 주세요"
         tap "태우기" 1330 1230; sleep 3; tap "1시간 전" 1532 699; sleep 7; }
-s4()  { scene 4 harness "하네스 착용 확인 → 주의가 사라집니다"; demo belt_on; sleep 5; }
+s4()  { scene 4 harness "하네스를 채우고 체크리스트에서 착용 확인 → 주의가 사라집니다"; sleep 1; tap "하네스 착용 확인"; sleep 5; }
 s5()  { scene 5 depart "출발 — 주행 중엔 온도 한 숫자와 다음 휴식 시간만 · 진정 사운드 재생 중 → 정지"
         drive_start; sleep 8; tap "진정 사운드"; mark calm_on; sleep 8; tap "정지"; mark calm_off; sleep 2; stop_segment; }
 s6()  { scene 6 heat "(시뮬레이션 27°C) 열사병 위험 → 자동 조절 (차량 제어 실험 기능)"
@@ -198,7 +198,8 @@ s11() { sleep 36                                                    # 30 s grace
 s12() { scene 12 return "운전자 복귀 — 기록 확인 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 기록 자세히 보기"
         $V door fl 1 >/dev/null; sleep 5; tap "내리기" 1653 1173; sleep 4; tap "좋았어요" 1152 800; sleep 3; tap "기록 자세히 보기" 1352 931; sleep 1; }
 s13() { scene 13 footprints "발자국: 이번 드라이브 → 속초 63 km 상세: 이벤트와 편안함 지수 이유"
-        sleep 4; tap "속초"; sleep 7; }
+        # The expanded drive (≈11 events) pushes the earlier trips below the fold: scroll before the text tap.
+        sleep 4; adb shell input swipe 1700 1150 1700 650 500; sleep 2; tap "속초"; sleep 7; }
 s14() { scene 14 outro "dog-footprint — 반려견 자리의 온도 한 숫자, 판정 한 단어"; sleep 3; }
 
 # ---------------------------------------------------------------- run

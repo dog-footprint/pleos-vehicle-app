@@ -1,0 +1,35 @@
+# Breed pictures: res/drawable/breed_<key>.xml
+#
+# Source: SVG Repo outline dog set, license CC0 as stated on every icon page below
+# (https://www.svgrepo.com/svg/<id>/<slug>; SVG at https://www.svgrepo.com/show/<id>/<slug>.svg).
+# Converted with `npx svg2vectordrawable -i <svg> -o breed_<key>.xml`, then width/height set to 48dp.
+# Heads where the set has one; full bodies for pug, dachshund, beagle, shepherd, greyhound, other.
+# The set lacks some Korean-common breeds; those use the closest look-alike (marked "~").
+#
+# key            id      slug                        note
+maltese          12223   bichon                      ~ bichon head (second drawing; bichon uses 108056)
+poodle           20964   poodle
+pomeranian       100070  pomeranian
+chihuahua        39914   chihuahua
+bichon           108056  bichon
+shih_tzu         28541   shih-tzu
+pug              1850    pug                         full body
+french_bulldog   118113  french-bulldog
+boston_terrier   49045   french-bulldog              ~ bat-eared head (different drawing from 118113)
+dachshund        55670   dachshund                   full body
+yorkshire        3570    yorkshire-terrier
+spitz            125144  pomeranian                  ~ spitz-type head (different drawing from 100070)
+corgi            87484   corgi
+shiba            42027   akitas                      ~ Japanese spitz-type head
+jindo            59250   akitas                      ~ spitz-type head (different drawing from 42027)
+border_collie    126191  border-collie
+beagle           17828   beagle                      full body
+cocker           59027   saluki                      ~ long-eared head
+golden           99809   pointer-dog                 ~ drop-eared head
+labrador         118619  german-shorthaired-pointer  ~ drop-eared head
+husky            127076  siberian-husky
+samoyed          94453   chow-chow                   ~ fluffy spitz-type head
+malamute         66833   malamute
+shepherd         73912   german-sheperd              full body
+greyhound        109047  greyhound                   full body
+other            162558  plain-dog                   full body, generic

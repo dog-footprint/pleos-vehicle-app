@@ -71,7 +71,7 @@ fun ProfileScreen(vm: CareViewModel, state: CareState) {
                     PleosListRow(
                         title = dog.name,
                         subtitle = listOf(breedName(dog.breedKey), lifeStageText(dog), stringResource(dog.size.labelRes), stringResource(dog.coat.labelRes), stringResource(dog.seat.labelRes)).joinToString(" · "),
-                        icon = R.drawable.ic_pets, iconTint = if (selected) c.accent else c.textPrimary,
+                        icon = breedIconRes(dog.breedKey), iconTint = if (selected) c.accent else c.textPrimary,
                         onClick = if (state.moving) null else { { editing = dog } },
                     ) {
                         if (selected) Text(stringResource(R.string.active_dog), style = PleosType.bodyMedium, color = c.accent)
@@ -109,6 +109,7 @@ private fun DogEditor(dog: DogProfile, onChange: (DogProfile) -> Unit, onSave: (
             if (!pickingBreed) {
                 // Chosen breed as one row; the grouped picker only when changing, so the editor is not a wall of chips.
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(PleosDims.space16)) {
+                    DogAvatar(dog.breedKey, size = PleosDims.iconButtonSmall, icon = PleosDims.iconSmall)
                     Text(breedName(dog.breedKey), style = PleosType.bodyLargeStrong, color = c.textPrimary)
                     PleosButton(stringResource(R.string.action_change), onClick = { pickingBreed = true }, size = ButtonSize.Small, primary = false)
                 }
@@ -124,7 +125,7 @@ private fun DogEditor(dog: DogProfile, onChange: (DogProfile) -> Unit, onSave: (
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(PleosDims.space12), verticalArrangement = Arrangement.spacedBy(PleosDims.space12)) {
                     BreedPresets.all.filter { if (group == null) it.key == BreedPresets.OTHER_KEY else it.size == group && it.key != BreedPresets.OTHER_KEY }.forEach { b ->
                         PleosToggleButton(
-                            if (isKorean()) b.nameKo else b.nameEn, on = dog.breedKey == b.key, size = ButtonSize.Small,
+                            if (isKorean()) b.nameKo else b.nameEn, on = dog.breedKey == b.key, size = ButtonSize.Small, icon = breedIconRes(b.key),
                             onToggle = { onChange(dog.copy(breedKey = b.key, size = b.size, coat = b.coat, brachycephalic = b.brachycephalic)); pickingBreed = false },
                         )
                     }

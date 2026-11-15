@@ -139,6 +139,8 @@ data class CareState(
     val dismissedCautions: Set<AlertKind> = emptySet(),
     /** A trip that just ended and still needs its mood check-in on the Home screen. */
     val pendingCheckIn: Trip? = null,
+    /** Driver confirmed the harness/crate by hand for this boarding (ComfortRules.restraintOk). */
+    val restraintConfirmed: Boolean = false,
     /** Leaving, stage 2: parked, dog on board, driver's door open (ComfortRules.isPreExit). */
     val preExit: Boolean = false,
     /** Leaving, stage 1: parked with a risky cabin — reminder to leave the climate on. */
@@ -160,7 +162,7 @@ data class CareState(
 fun CareState.afterTripEnd(): CareState = copy(
     trip = null, askTripEnd = false, drivenSinceBreakSec = 0, breakPhase = BreakPhase.NONE, lastApply = null, banner = null,
     mealNotice = MealNotice.NONE, heatAlert = false, alerts = emptyList(), dismissedCautions = emptySet(), aboard = false,
-    petAlone = false, petAloneSince = null, petAloneRisky = false, cabinLevel = null, preExit = false, leavePrep = false, driverBack = false, petAloneMaxTemp = null,
+    petAlone = false, petAloneSince = null, petAloneRisky = false, cabinLevel = null, preExit = false, leavePrep = false, driverBack = false, petAloneMaxTemp = null, restraintConfirmed = false,
     data = data.copy(aboardDogId = null, lastMealAt = null),
 )
 
@@ -334,8 +336,11 @@ class CareEngine(
 
     /** "내리기": ends the trip if one is running, otherwise just clears boarding. */
     fun unboard() {
-        if (_state.value.trip != null) endTrip(null, null) else { setAboard(false); _state.update { it.copy(mealNotice = MealNotice.NONE) }; scope.launch { repo.setLastMeal(null) } }
+        if (_state.value.trip != null) endTrip(null, null) else { setAboard(false); _state.update { it.copy(mealNotice = MealNotice.NONE, restraintConfirmed = false) }; scope.launch { repo.setLastMeal(null) } }
     }
+
+    /** Checklist toggle: the driver says the harness/crate is on (or takes it back). */
+    fun confirmRestraint(on: Boolean) = _state.update { it.copy(restraintConfirmed = on) }
 
     fun dismissAlert(kind: AlertKind) = _state.update { it.copy(dismissedCautions = it.dismissedCautions + kind) }
 
@@ -602,16 +607,17 @@ class CareEngine(
         if (windowFlagged) flags += SafetyFlag.WINDOW_OPEN
 
         val dogPresent = v.occupancy == true || (v.occupancy == null && s.aboard)
-        if (moving && dogPresent && beltBuckled == false) {
+        val restrained = restraintOk(beltBuckled, s.restraintConfirmed)
+        if (moving && dogPresent && !restrained) {
             flags += SafetyFlag.BELT_UNBUCKLED
             if (!beltFlagged) {
                 beltFlagged = true
                 trip = trip?.withEvent(EventType.BELT_UNBUCKLED, now)
                 guide(context.getString(R.string.guide_belt, dog?.name ?: ""), GuidePriority.WARN)
             }
-        } else if (!moving && s.aboard && dogPresent && beltBuckled == false) {
+        } else if (!moving && s.aboard && dogPresent && !restrained) {
             flags += SafetyFlag.BELT_UNBUCKLED   // parked after boarding: the one thing to do before leaving (3rd review D2)
-        } else if (beltBuckled == true) {
+        } else if (restrained) {
             beltFlagged = false
         }
         if (v.doorOpen == true) flags += SafetyFlag.DOOR_OPEN

@@ -140,7 +140,7 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
     <span>팀 dog-footprint</span><span>기준 커밋 <code>ffddd8f</code> · 2026-11-14</span><span>Kotlin · Jetpack Compose · Pleos Connect SDK</span>
   </div>
   <div class="stats">
-    <div class="stat"><b>4</b><span>화면 (지금 · 발자국 · 프로필 · 설정)</span></div>
+    <div class="stat"><b>4</b><span>화면 (케어 · 발자국 · 프로필 · 설정)</span></div>
     <div class="stat"><b>4</b><span>홈 화면 (정차 · 주행 · 펫 단독 · 종료 체크인)</span></div>
     <div class="stat"><b>5</b><span>Pleos SDK 연동 (4개 사용 중)</span></div>
     <div class="stat"><b>17</b><span>음성 안내 문장 (Pleos TTS)</span></div>
@@ -205,7 +205,7 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
   </header>
 
   <article class="feature">
-    <div class="side"><span class="num">01</span><h3>반려견 프로필</h3><p>한 번 입력하면 온도 범위와 휴식 간격이 그 개에 맞게 정해집니다. 25개 견종 프리셋이 크기·털·단두종 기본값을 채웁니다.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
+    <div class="side"><span class="num">01</span><h3>반려견 프로필</h3><p>한 번 입력하면 온도 범위와 휴식 간격이 그 개에 맞게 정해집니다. 25개 견종 프리셋이 크기·털·단두종 기본값을 채우고, 견종별 라인아트(CC0)가 프로필 사진을 대신해 홈·발자국·좌석 표시에 쓰입니다 — 사진 반입은 플랫폼상 불가.</p><div class="chips"><span class="chip demo">데모 영상</span><span class="chip live">에뮬레이터 검증</span></div></div>
     <div class="main"><div class="tablewrap"><table>
       <tr><th>입력</th><th>규칙에 미치는 영향</th><th>근거</th></tr>
       <tr><td>견종 → 단두종</td><td>온도 상한 21 °C, 열사병 경보 24 °C부터</td><td class="src">Hall 2020 VetCompass OR 2.10 · Carter 2020</td></tr>
@@ -253,7 +253,7 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
     <div class="main"><div class="tablewrap"><table>
       <tr><th>체크</th><th>조건</th><th>신호</th></tr>
       <tr><td>창문 많이 열림</td><td>주행 중 개 자리 창문이 30 % 넘게 열림 (20 % 아래로 닫히면 해제)</td><td class="src">Vehicle: window position</td></tr>
-      <tr><td>하네스 미착용</td><td>탑승 중인데 자리 벨트가 안 채워짐</td><td class="src">Vehicle: seat belt buckled, occupancy</td></tr>
+      <tr><td>하네스 미착용</td><td>탑승 중인데 벨트 버클 센서가 체결을 감지하지 못했고 운전자가 체크리스트에서 "하네스 착용 확인"(케이지면 "케이지 고정 확인")을 누르지도 않음 — 차량이 감지할 수 있는 건 버클에 꽂는 클립뿐이라 수동 확인이 기본 경로</td><td class="src">Vehicle: seat belt buckled, occupancy + 수동 확인</td></tr>
       <tr><td>문 열림</td><td>정차 중 개 자리 문(트렁크 포함)이 열림</td><td class="src">Vehicle: door position</td></tr>
       <tr><td>급제동 반복</td><td>10초 안에 브레이크 4회 이상 → 스트레스 이벤트, 지수 −10 (60초 쿨다운)</td><td class="src">Vehicle: brake pedal</td></tr>
       <tr><td>스포츠 모드</td><td>여행당 1회 "노멀 모드가 편해요"</td><td class="src">Vehicle: driving mode (에뮬레이터 미지원)</td></tr>
@@ -286,7 +286,7 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
     <div class="side"><span class="num">07</span><h3>진정 모드</h3><p>켄넬 연구에 근거한 두 가지. 저주파 노이즈는 개 대상 근거가 없고 청력 하한(~67 Hz) 근처라 제외했습니다.</p><div class="chips"><span class="chip demo">데모 영상 (음악)</span><span class="chip live">에뮬레이터 검증</span></div></div>
     <div class="main"><div class="tablewrap"><table>
       <tr><th>모드</th><th>동작</th><th>근거</th></tr>
-      <tr><td>잔잔한 음악</td><td>Open Goldberg Variations (CC0) 세 곡을 매번 다른 순서로 순환, −20 LUFS 정규화, 기본 볼륨 낮음, 오디오 포커스 처리</td><td class="src">Bowman 2015/2017 (같은 곡 7일 반복 시 습관화 → 순환) · Kogan 2012</td></tr>
+      <tr><td>잔잔한 음악</td><td>Open Goldberg Variations (CC0)의 느린 악장 다섯 곡(Aria·13·15·21·25)을 매번 다른 순서로 순환, −20 LUFS 정규화, 기본 볼륨 낮음, 오디오 포커스 처리. 선곡 근거 전체는 <code>docs/CALMING_MUSIC.md</code></td><td class="src">Wells 2002 · Kogan 2012 · Bowman 2015/2017 (같은 곡 반복 시 수일 내 습관화 → 순환) · Amaya 2020 (저음 강조는 각성↑ → 중음역 피아노)</td></tr>
       <tr><td>이야기 듣기</td><td>차량 음성이 개 이름을 넣어 짧은 이야기 8줄을 반복 낭독. TTS가 꺼져 있거나 연결 안 되면 음악으로 대체</td><td class="src">Brayley &amp; Montrose 2016 (오디오북 &gt; 음악 &gt; 무음)</td></tr>
     </table></div></div>
   </article>
@@ -342,22 +342,22 @@ footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
 </section>
 
 <section id="demo">
-  <header><h2>데모 영상 <span style="color:var(--fg-3);font-weight:500">3분 11초</span></h2><p><code>docs/demo/dog-footprint-demo.mp4</code> — 에뮬레이터 화면을 녹화하고 아래에 자막 띠를 붙였습니다. 음성 안내는 에뮬레이터 캡처에 담기지 않는 내비 버스로 나가기 때문에 같은 문장을 macOS 음성으로 재현해 넣었습니다(해당 장면 자막에 "음성 재현"). 시각은 영상 기준입니다.</p></header>
+  <header><h2>데모 영상 <span style="color:var(--fg-3);font-weight:500">3분 26초</span></h2><p><code>docs/demo/dog-footprint-demo.mp4</code> — 에뮬레이터 화면을 녹화하고 아래에 자막 띠를 붙였습니다. 음성 안내는 에뮬레이터 캡처에 담기지 않는 내비 버스로 나가기 때문에 같은 문장을 macOS 음성으로 재현해 넣었습니다(해당 장면 자막에 "음성 재현"). 시각은 영상 기준입니다.</p></header>
   <ol class="timeline">
     <li><span class="t">0:01</span><div class="what"><b>인트로</b><span>문제 제기(McLaren 2005 · Hall 2020 수치) + 정차 홈, 음성 재현 안내 한 번</span></div></li>
-    <li><span class="t">0:06</span><div class="what"><b>프로필</b><span>변경 → 소형 → 퍼그: 적정 범위 19–21 °C · 휴식 90분으로 바뀜 → 다시 허스키 (10초)</span></div></li>
-    <li><span class="t">0:16</span><div class="what"><b>태우기</b><span>코코 태우기 → 마지막 식사 1시간 전 → 탑승 직후 하네스 주의</span></div></li>
-    <li><span class="t">0:31</span><div class="what"><b>하네스</b><span>착용 확인 → 주의 사라짐</span></div></li>
-    <li><span class="t">0:36</span><div class="what"><b>출발</b><span>주행 화면: 온도 · 판정 · 다음 휴식 · 진정 사운드 재생/정지</span></div></li>
-    <li><span class="t">1:05</span><div class="what"><b>열사병</b><span>(시뮬레이션 27 °C) 위험 배너 + 자동 조절 (차량 제어 실험 기능)</span></div></li>
-    <li><span class="t">1:26</span><div class="what"><b>창문</b><span>뒷좌석 창문 60 % → 창문을 올려 주세요</span></div></li>
-    <li><span class="t">1:35</span><div class="what"><b>휴식</b><span>(90분 경과 가정) 쉴 시간 → 휴식 완료</span></div></li>
-    <li><span class="t">1:49</span><div class="what"><b>도착</b><span>P 전환, 실내가 더우면 공조를 켜 두라는 주의 + 음성</span></div></li>
-    <li><span class="t">2:05</span><div class="what"><b>내리기 전 확인</b><span>운전석 문 열림 → 코코를 두고 내리시나요? 공조 켜짐+더움이라 "설정 20°C로 낮추기" → 정상 확인</span></div></li>
-    <li><span class="t">2:27</span><div class="what"><b>펫 단독</b><span>(30초 후) 코코 혼자 있어요 — 시간 · 최고 온도</span></div></li>
-    <li><span class="t">2:33</span><div class="what"><b>복귀</b><span>문 다시 열림 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 기록 자세히 보기</span></div></li>
-    <li><span class="t">2:54</span><div class="what"><b>발자국</b><span>이번 드라이브 상세에서 바로 속초 63 km 상세(이벤트 · 휴식 65분 · 지수 이유)로 마무리</span></div></li>
-    <li><span class="t">3:08</span><div class="what"><b>아웃트로</b><span></span></div></li>
+    <li><span class="t">0:07</span><div class="what"><b>프로필</b><span>변경 → 소형 → 퍼그: 적정 범위 19–21 °C · 휴식 90분으로 바뀜 → 다시 허스키 (10초)</span></div></li>
+    <li><span class="t">0:17</span><div class="what"><b>태우기</b><span>코코 태우기 → 마지막 식사 1시간 전 → 탑승 직후 하네스 주의</span></div></li>
+    <li><span class="t">0:34</span><div class="what"><b>하네스</b><span>착용 확인 → 주의 사라짐</span></div></li>
+    <li><span class="t">0:46</span><div class="what"><b>출발</b><span>주행 화면: 온도 · 판정 · 다음 휴식 · 진정 사운드 재생/정지</span></div></li>
+    <li><span class="t">1:17</span><div class="what"><b>열사병</b><span>(시뮬레이션 27 °C) 위험 배너 + 자동 조절 (차량 제어 실험 기능)</span></div></li>
+    <li><span class="t">1:38</span><div class="what"><b>창문</b><span>뒷좌석 창문 60 % → 창문을 올려 주세요</span></div></li>
+    <li><span class="t">1:47</span><div class="what"><b>휴식</b><span>(90분 경과 가정) 쉴 시간 → 휴식 완료</span></div></li>
+    <li><span class="t">2:01</span><div class="what"><b>도착</b><span>P 전환, 실내가 더우면 공조를 켜 두라는 주의 + 음성</span></div></li>
+    <li><span class="t">2:17</span><div class="what"><b>내리기 전 확인</b><span>운전석 문 열림 → 코코를 두고 내리시나요? 공조 켜짐+더움이라 "설정 20°C로 낮추기" → 정상 확인</span></div></li>
+    <li><span class="t">2:38</span><div class="what"><b>펫 단독</b><span>(30초 후) 코코 혼자 있어요 — 시간 · 최고 온도</span></div></li>
+    <li><span class="t">2:45</span><div class="what"><b>복귀</b><span>문 다시 열림 → 내리기 → 오늘 코코는 어땠나요? 한 번 탭 → 기록 자세히 보기</span></div></li>
+    <li><span class="t">3:06</span><div class="what"><b>발자국</b><span>이번 드라이브 상세에서 바로 속초 63 km 상세(이벤트 · 휴식 65분 · 지수 이유)로 마무리</span></div></li>
+    <li><span class="t">3:22</span><div class="what"><b>아웃트로</b><span></span></div></li>
   </ol>
   <div class="two">
     <div><h3>영상에 들어간 기능</h3><ul>
@@ -420,7 +420,7 @@ scripts/vehicle-sim.sh gear Drive &amp;&amp; scripts/vehicle-sim.sh odometer +0.
       <li>심사위원이 직접 누를 수 있는 것: 탑승(식사 팝업), 자동 조절, 진정 사운드, 휴식 완료, 여행 종료, 설정의 개발자 버튼</li>
       <li>진행자가 옆에서 신호를 넣는 것: <code>vehicle-sim.sh window rl 60</code>, <code>brake</code>, <code>gear</code> — 터미널 한 줄씩</li>
       <li>소리가 중요한 장면(음성 안내, 음악)은 에뮬레이터 오디오를 스피커로 출력</li>
-      <li>보험: 데모 영상(3:11)을 같은 화면에 띄울 수 있게 준비</li>
+      <li>보험: 데모 영상(3:26)을 같은 화면에 띄울 수 있게 준비</li>
     </ol>
   </div>
 

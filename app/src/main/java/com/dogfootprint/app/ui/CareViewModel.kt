@@ -28,6 +28,7 @@ class CareViewModel(private val app: App) : ViewModel() {
     fun startTrip() = engine.startTripNow()
     fun endTrip(mood: Mood?, note: String?) = engine.endTrip(mood, note)
     fun unboard() = engine.unboard()
+    fun confirmRestraint(on: Boolean) = engine.confirmRestraint(on)
     fun checkIn(mood: Mood) = engine.checkIn(mood)
     fun addNote(note: String) = engine.addNote(note)
     fun dismissCheckIn() = engine.dismissCheckIn()

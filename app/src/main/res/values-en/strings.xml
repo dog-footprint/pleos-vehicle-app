@@ -168,7 +168,7 @@
     <string name="breed_other_hint">For mixed/other, pick the traits yourself</string>
     <string name="seat_driver">Driver</string>
     <!-- Redesign (Pleos) -->
-    <string name="nav_now">Now</string>
+    <string name="nav_now">Care</string>
     <string name="verdict_ok">Comfortable</string>
     <string name="verdict_hot">Too warm</string>
     <string name="verdict_cold">Too cold</string>
@@ -238,10 +238,10 @@
     <string name="guide_meal_warn">A meal not long ago. Motion sickness is likely, so start gently.</string>
     <string name="calm_mode">Calm mode</string>
     <string name="calm_mode_music">Calm music</string>
-    <string name="calm_mode_music_body">Bach Goldberg Variations (CC0), low volume, rotated</string>
+    <string name="calm_mode_music_body">Bach Goldberg Variations, five slow movements (CC0), low volume, rotated</string>
     <string name="calm_mode_story">Listen to a story</string>
     <string name="calm_mode_story_body">The vehicle\'s voice reads a calm narration</string>
-    <string name="calm_evidence">Based on kennel studies: calm music and audiobooks increase resting and reduce barking (modest effect; habituation within 7 days of the same music). Low-frequency noise has no evidence and was removed.</string>
+    <string name="calm_evidence">Based on kennel studies: calm music and audiobooks increase resting and reduce barking (modest effect; habituation within days of the same music). Low-frequency noise has no evidence and was removed.</string>
     <string name="tile_calm_body">Calm music or a story to ease tension</string>
     <string-array name="calm_story">
         <item>%1$s, today we take it slow.</item>
@@ -367,4 +367,8 @@
     <string name="pet_alone_hvac_caution_fmt">Cabin %1$d° · climate off — turn it on when you are back</string>
     <string name="action_close">Close</string>
     <string name="pre_exit_line_off_prefix_fmt">Range %1$.0f–%2$.0f°C · </string>
+    <string name="check_crate">Crate</string>
+    <string name="check_confirmed">confirmed</string>
+    <string name="check_harness_confirm">Harness on</string>
+    <string name="check_crate_confirm">Crate secured</string>
 </resources>

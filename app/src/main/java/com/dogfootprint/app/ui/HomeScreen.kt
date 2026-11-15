@@ -41,6 +41,8 @@ import com.dogfootprint.app.care.BreakPhase
 import com.dogfootprint.app.care.AlertLevel
 import com.dogfootprint.app.care.CareState
 import com.dogfootprint.app.care.climateAction
+import com.dogfootprint.app.care.restraintOk
+import com.dogfootprint.app.data.Restraint
 import com.dogfootprint.app.care.ClimateVerdict
 import com.dogfootprint.app.care.SafetyFlag
 import com.dogfootprint.app.care.bandDelta
@@ -198,7 +200,7 @@ private fun ParkedHome(vm: CareViewModel, state: CareState, compact: Boolean) {
     val beltToDo = state.aboard && SafetyFlag.BELT_UNBUCKLED in state.safety
     val header: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            PleosIcon(R.drawable.ic_pets, c.textPrimary)
+            DogAvatar(dog.breedKey)
             Spacer(Modifier.width(PleosDims.space16))
             Column(Modifier.weight(1f)) {
                 Text(dog.name, style = PleosType.titleLarge, color = c.textPrimary)
@@ -223,7 +225,7 @@ private fun ParkedHome(vm: CareViewModel, state: CareState, compact: Boolean) {
         }
     }
     val side: @Composable () -> Unit = {
-        Checklist(state)
+        Checklist(vm, state)
         PleosDivider(Modifier.padding(vertical = PleosDims.space24))
         FootprintsLine(state)
     }
@@ -256,7 +258,7 @@ private fun ParkedHome(vm: CareViewModel, state: CareState, compact: Boolean) {
 
 /** Window · harness · door — neutral before boarding: done = check, pending = empty circle (3rd review D1). */
 @Composable
-private fun Checklist(state: CareState) {
+private fun Checklist(vm: CareViewModel, state: CareState) {
     val c = Pleos.colors
     val v = state.vehicle
     Text(stringResource(R.string.check_title), style = PleosType.bodyMediumStrong, color = c.textTertiary, modifier = Modifier.padding(bottom = PleosDims.space12))
@@ -270,7 +272,21 @@ private fun Checklist(state: CareState) {
         PleosStatusLine(icon, stringResource(label) + " · " + stringResource(stateRes), tint = if (ok == null) c.textTertiary else c.textSecondary, modifier = Modifier.padding(vertical = PleosDims.space8))
     }
     line(R.string.check_window, v.windowPosition?.let { it == 0 }, R.string.check_closed, R.string.check_open)
-    line(R.string.check_harness, v.beltBuckled, R.string.check_worn, R.string.check_not_worn)
+    // The car only senses a harness clip in the buckle; a crate or a clip-less harness is confirmed by hand.
+    val restraint = state.dog?.restraint ?: Restraint.HARNESS
+    val sensed = v.beltBuckled == true
+    val ok = restraintOk(v.beltBuckled, state.restraintConfirmed)
+    val label = if (restraint == Restraint.CRATE) R.string.check_crate else R.string.check_harness
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = PleosDims.space8)) {
+        PleosStatusLine(
+            if (ok) R.drawable.ic_check_circle else R.drawable.ic_radio_button_unchecked,
+            stringResource(label) + " · " + stringResource(if (!ok) R.string.check_not_worn else if (sensed) R.string.check_worn else R.string.check_confirmed),
+            tint = c.textSecondary, modifier = Modifier.weight(1f),
+        )
+        if (restraint != Restraint.NONE && !sensed && state.aboard) {
+            PleosToggleButton(stringResource(if (restraint == Restraint.CRATE) R.string.check_crate_confirm else R.string.check_harness_confirm), on = state.restraintConfirmed, size = ButtonSize.Small, onToggle = vm::confirmRestraint)
+        }
+    }
     line(R.string.check_door, v.doorOpen?.let { !it }, R.string.check_closed, R.string.check_open)
 }
 
@@ -355,7 +371,7 @@ private fun SeatMap(state: CareState) {
                 ),
             contentAlignment = Alignment.Center,
         ) {
-            if (on) PleosIcon(if (fallback) R.drawable.ic_thermostat else R.drawable.ic_pets, if (danger) c.onButtonFilled else c.textSecondary, size = PleosDims.iconSmall)
+            if (on) PleosIcon(if (fallback) R.drawable.ic_thermostat else breedIconRes(dog.breedKey), if (danger) c.onButtonFilled else c.textSecondary, size = PleosDims.iconSmall)
         }
     }
     // One car-shaped outline (narrow front, full-width body; GenericShape with the large radius token) around the
@@ -406,6 +422,16 @@ private class CarOutline(private val frontInset: androidx.compose.ui.unit.Dp) : 
  * Vehicle Control, what the driver should do. Danger (outside the band / heading out) is red, a caution
  * (climate off but inside the band) is plain with the triangle.
  */
+/** Screen title next to the dog's picture (small avatar = the 64 dp line height of headlineSmall). */
+@Composable
+private fun TitleWithAvatar(breedKey: String, title: String, style: TextStyle = PleosType.headlineSmall) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        DogAvatar(breedKey, size = PleosDims.iconButtonSmall, icon = PleosDims.iconSmall)
+        Spacer(Modifier.width(PleosDims.space16))
+        Text(title, style = style, color = Pleos.colors.textPrimary)
+    }
+}
+
 @Composable
 private fun PreExitHome(vm: CareViewModel, state: CareState) {
     val c = Pleos.colors
@@ -416,7 +442,7 @@ private fun PreExitHome(vm: CareViewModel, state: CareState) {
     val tint = levelTint(level)
     val canAct = action != null && state.data.settings.controlEnabled
     Column(Modifier.fillMaxSize().then(screenPadding)) {
-        Text(stringResource(R.string.pre_exit_title_fmt, dog.name), style = PleosType.headlineSmall, color = c.textPrimary)
+        TitleWithAvatar(dog.breedKey, stringResource(R.string.pre_exit_title_fmt, dog.name))
         Spacer(Modifier.weight(1f))
         TempHero(state, showDelta = false, showBand = false)
         state.band?.let { band ->
@@ -466,7 +492,7 @@ private fun PetAloneHome(vm: CareViewModel, state: CareState) {
     val frame = if (danger) Modifier.padding(PleosDims.space8).border(PleosDims.space4, c.negative, PleosDims.radiusLarge) else Modifier
 
     Column(Modifier.fillMaxSize().then(frame).then(screenPadding)) {
-        Text(stringResource(R.string.pet_alone_title_fmt, dog.name), style = PleosType.headlineSmall, color = c.textPrimary)
+        TitleWithAvatar(dog.breedKey, stringResource(R.string.pet_alone_title_fmt, dog.name))
         // The record first, large, right under the title — what the returning driver wants to know.
         Text(
             if (aloneMin < 1) stringResource(R.string.pet_alone_summary_now)
@@ -520,7 +546,7 @@ private fun TripEndCheckIn(vm: CareViewModel, state: CareState, onOpenTrip: (Str
     val counts = trip.events.groupingBy { it.type }.eachCount()
     val reasons = penalties.mapNotNull { (t, p) -> counts[t]?.takeIf { it > 0 }?.let { n -> stringResource(t.labelRes) + " −" + n * p } }
     Column(Modifier.fillMaxSize().then(screenPadding), verticalArrangement = Arrangement.Center) {
-        Text(stringResource(R.string.trip_done_title_fmt, dog.name), style = PleosType.titleLarge, color = c.textPrimary)
+        TitleWithAvatar(dog.breedKey, stringResource(R.string.trip_done_title_fmt, dog.name), style = PleosType.titleLarge)
         Text(
             stringResource(R.string.fp_summary_fmt, trip.distanceKm, minutesText(trip.drivingSec), trip.breaks),
             style = PleosType.bodyLarge, color = c.textSecondary, modifier = Modifier.padding(top = PleosDims.space8),

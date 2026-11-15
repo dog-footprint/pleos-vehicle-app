@@ -1,5 +1,6 @@
 package com.dogfootprint.app.ui
 
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.dogfootprint.app.R
@@ -34,6 +35,40 @@ import kotlin.math.roundToInt
 fun isKorean(): Boolean = Locale.getDefault().language == "ko"
 
 fun breedName(key: String): String = if (key.isBlank()) "—" else BreedPresets.byKey(key).let { if (isKorean()) it.nameKo else it.nameEn }
+
+/**
+ * Breed line-art for the dog's picture (SVG Repo outline set, CC0; sources and look-alikes in
+ * scripts/breed-icons/sources.txt). Unknown or blank keys get the generic dog, like [BreedPresets.byKey].
+ */
+@DrawableRes
+fun breedIconRes(key: String): Int = when (BreedPresets.byKey(key).key) {
+    "maltese" -> R.drawable.breed_maltese
+    "poodle" -> R.drawable.breed_poodle
+    "pomeranian" -> R.drawable.breed_pomeranian
+    "chihuahua" -> R.drawable.breed_chihuahua
+    "bichon" -> R.drawable.breed_bichon
+    "shih_tzu" -> R.drawable.breed_shih_tzu
+    "pug" -> R.drawable.breed_pug
+    "french_bulldog" -> R.drawable.breed_french_bulldog
+    "boston_terrier" -> R.drawable.breed_boston_terrier
+    "dachshund" -> R.drawable.breed_dachshund
+    "yorkshire" -> R.drawable.breed_yorkshire
+    "spitz" -> R.drawable.breed_spitz
+    "corgi" -> R.drawable.breed_corgi
+    "shiba" -> R.drawable.breed_shiba
+    "jindo" -> R.drawable.breed_jindo
+    "border_collie" -> R.drawable.breed_border_collie
+    "beagle" -> R.drawable.breed_beagle
+    "cocker" -> R.drawable.breed_cocker
+    "golden" -> R.drawable.breed_golden
+    "labrador" -> R.drawable.breed_labrador
+    "husky" -> R.drawable.breed_husky
+    "samoyed" -> R.drawable.breed_samoyed
+    "malamute" -> R.drawable.breed_malamute
+    "shepherd" -> R.drawable.breed_shepherd
+    "greyhound" -> R.drawable.breed_greyhound
+    else -> R.drawable.breed_other
+}
 
 /** Every duration the driver reads ("1시간 18분", "3분") — same rounding everywhere (ComfortRules.wholeMinutes). */
 @Composable

@@ -296,6 +296,13 @@ fun isPreExit(aboard: Boolean, moving: Boolean, gearPark: Boolean?, driverDoorOp
 /** Every duration the driver sees goes through this (check-in, Footprints list, break line): nearest whole minute. */
 fun wholeMinutes(sec: Int): Int = (sec + 30) / 60
 
+/**
+ * A harness clip in the buckle is the only restraint the car can sense; a crate or a harness without a clip is
+ * not. So the restraint counts as done when the belt sensor says buckled OR the driver confirmed it by hand
+ * (ParkedHome checklist). The confirmation is per boarding and resets at trip end / unboard.
+ */
+fun restraintOk(beltBuckled: Boolean?, confirmed: Boolean): Boolean = beltBuckled == true || confirmed
+
 /** Parking-lot shuffles are not footprints: a trip is recorded only from 1 km or 3 minutes of driving. */
 const val TRIP_MIN_KM = 1f
 const val TRIP_MIN_SEC = 180

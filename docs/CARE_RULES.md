@@ -73,8 +73,10 @@ What does have evidence (all kennel/shelter settings, modest effects):
 | Classical | less stress than silence; **habituation after 7 days** of the same music | Bowman et al. 2015; Kogan 2012; Wells 2002 |
 | Heavy metal | increased agitation/shaking | Kogan 2012 |
 | "Species-specific" music | no better than classical | Lindig, McGreevy & Crean 2020 review, *Animals* 10:127 |
+| Low-pitch-shifted music | raised alertness (standing, walking, tail wagging); slow tempo calmer only relative to low pitch (n = 10) | Amaya et al. 2020, *Animals* 11:10 |
+| Classical under acute stress (vet visit, owner separation) | no or only moderate effect (n = 74, 38, 82) | Engler & Bain 2017; King et al. 2022; Kinnaird & Wells 2022; McDonald & Zaki 2020 appraisal |
 
-**Replacement**: "진정 모드" offers (a) calm music — bundled excerpts of the *Open Goldberg Variations* (Kimiko Ishizaka; "free of copyright, all uses allowed"), rotated so the same piece is not repeated every trip, at low volume; (b) 이야기 듣기 — a calm narration read by the vehicle's TTS (approximating the audiobook effect; evidence is for human-read books). The UI states the evidence level.
+**Replacement**: "진정 모드" offers (a) calm music — the slow movements of the *Open Goldberg Variations* (Kimiko Ishizaka; "free of copyright, all uses allowed") — Aria, Var. 13, 15, 21, 25 — rotated so the same piece is not repeated every trip, at low volume (full evidence table, selection criteria and limits in `docs/CALMING_MUSIC.md`); (b) 이야기 듣기 — a calm narration read by the vehicle's TTS (approximating the audiobook effect; evidence is for human-read books). The UI states the evidence level.
 
 ## 7. How the rules use this
 

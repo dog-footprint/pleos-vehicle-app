@@ -48,7 +48,10 @@ fun FootprintsScreen(state: CareState, initialTripId: String? = null) {
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = PleosDims.space40, vertical = PleosDims.space24)) {
         item {
-            Text(stringResource(R.string.footprints_title, dog?.name ?: "—"), style = PleosType.titleLarge, color = c.textPrimary)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                dog?.let { DogAvatar(it.breedKey, size = PleosDims.iconButtonSmall, icon = PleosDims.iconSmall); Spacer(Modifier.width(PleosDims.space16)) }
+                Text(stringResource(R.string.footprints_title, dog?.name ?: "—"), style = PleosType.titleLarge, color = c.textPrimary)
+            }
             Spacer(Modifier.height(PleosDims.space16))
             Text(stringResource(R.string.footprints_week_fmt, week.size, week.sumOf { it.distanceKm.toDouble() }.toFloat()), style = PleosType.headlineSmall, color = c.textPrimary)
             Text(

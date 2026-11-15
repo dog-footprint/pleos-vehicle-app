@@ -24,15 +24,17 @@ private const val TAG = "DogFootprint"
 /**
  * "진정 모드". Two options with kennel-study evidence (docs/CARE_RULES.md §6):
  *  - MUSIC: calm classical at low volume — the Open Goldberg Variations (Kimiko Ishizaka, CC0: "free of
- *    copyright, all uses allowed"), three slow pieces rotated so the same one is not repeated every trip
- *    (classical calms dogs but habituates after ~7 days of the same music; variety held the effect — Bowman 2015/2017).
+ *    copyright, all uses allowed"), five slow movements rotated so the same one is not repeated every trip
+ *    (classical calms dogs but habituates within days of the same music; variety held the effect — Bowman 2015/2017;
+ *    evidence and selection criteria in docs/CALMING_MUSIC.md).
  *  - STORY: a calm narration read by the vehicle's voice (audiobooks beat music and silence for resting
  *    and barking in Brayley & Montrose 2016; TTS is an approximation of a human reader).
  * Low-frequency "brown noise" was dropped: no canine evidence, and it sits mostly below dogs' ~67 Hz hearing floor.
  */
 class CalmingPlayer(private val context: Context, private val voice: VoiceGuide) {
 
-    private val tracks = listOf(R.raw.calm_aria, R.raw.calm_var13, R.raw.calm_var25)
+    // Slow movements only (Aria, Var. 13, 15, 21, 25); the fast variations would not fit the evidence (docs/CALMING_MUSIC.md).
+    private val tracks = listOf(R.raw.calm_aria, R.raw.calm_var13, R.raw.calm_var15, R.raw.calm_var21, R.raw.calm_var25)
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private val _playing = MutableStateFlow(false)
     val playing: StateFlow<Boolean> = _playing

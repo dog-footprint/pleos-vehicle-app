@@ -9,7 +9,7 @@ Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md). Evi
 
 ## APK
 
-- Location: [`apk/dog-footprint_dog-footprint_release.apk`](apk/) — also attached to the GitHub Release [v0.1.0](https://github.com/dog-footprint/pleos-vehicle-app/releases/tag/v0.1.0) together with the demo video
+- Location: [`apk/dog-footprint_dog-footprint_release.apk`](apk/) — also attached to the GitHub Release [v0.1.1](https://github.com/dog-footprint/pleos-vehicle-app/releases/tag/v0.1.1) together with the demo video
 - Build: release build, signed (v3), minSdk 28 / targetSdk 35
 
 ## How to run
@@ -44,7 +44,7 @@ Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md). Evi
 | Break reminders (pre-alert + due), rest-area suggestion | odometer-based driving time; NaviHelper destination + TBT rest area | Vehicle (CAR_DRIVE), NaviHelper |
 | Safety checks: window open, harness unbuckled, door open, sport mode, hard-brake bursts | seat occupancy/belt, window & door position, drive mode, brake pedal | Vehicle |
 | Spoken guidance (Korean) with chime fallback | Pleos TTS, registered with the team's Client ID/Secret | TextToSpeech |
-| Calming mode | CC0 calm classical (Open Goldberg Variations, three pieces rotated) or a TTS-read story; brown noise dropped for lack of canine evidence | TextToSpeech (story) |
+| Calming mode | CC0 calm classical (Open Goldberg Variations, five slow movements rotated; evidence and selection criteria in `docs/CALMING_MUSIC.md`) or a TTS-read story; brown noise dropped for lack of canine evidence | TextToSpeech (story) |
 | Footprints: per-trip distance, time, breaks, event timeline with icons, comfort score with the reasons for each deduction, mood | local DataStore | FusedLocation for coordinates |
 | Five Home screens (parked · driving · leaving with the driver's door open · pet alone · trip-end check-in) with a fixed warning slot (danger / caution / notice, wording per screen) | state-specific composables, `activeAlerts` + `AlertTexts` | Vehicle: driver door, passenger occupancy, power-down warning |
 | Leaving flow: reminder at the P shift, "코코를 두고 내리시나요?" when the door opens, "공조 켜기" (control builds) or utility-mode guidance (release), pet-alone record with time alone and peak temperature | `CareEngine` leaving stages, `keepClimate` | Vehicle Control (not yet approved) |
@@ -153,3 +153,11 @@ app/src/main/java/com/dogfootprint/app/
 
 Before an App Market submission, remove the `CONTROL_CAR_*` permissions from the manifest unless Vehicle Control has
 been approved for the project.
+
+## Third-party assets
+
+| Asset | Source | License |
+|---|---|---|
+| Calming music (`res/raw/calm_*.m4a`) | *Open Goldberg Variations*, Kimiko Ishizaka (2012), via archive.org/details/OpenGoldbergVariations | CC0 ("free of copyright, all uses allowed") |
+| Breed pictures (`res/drawable/breed_*.xml`) | SVG Repo outline dog set; each icon's page and look-alike substitutions are listed in `scripts/breed-icons/sources.txt` | CC0 (as stated on each icon page) |
+| UI icons (`res/drawable/ic_*.xml`) | Google Material Symbols (outlined, 48 px) via `scripts/fetch-icons.sh` | Apache 2.0 |

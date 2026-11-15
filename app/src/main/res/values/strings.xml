@@ -175,7 +175,7 @@
     <string name="breed_other_hint">믹스/기타는 특성을 직접 골라 주세요</string>
     <string name="seat_driver">운전석</string>
     <!-- Redesign (Pleos) -->
-    <string name="nav_now">지금</string>
+    <string name="nav_now">케어</string>
     <string name="verdict_ok">괜찮아요</string>
     <string name="verdict_hot">더워요</string>
     <string name="verdict_cold">추워요</string>
@@ -245,10 +245,10 @@
     <string name="guide_meal_warn">식사한 지 얼마 안 됐어요. 멀미할 수 있으니 부드럽게 출발해 주세요.</string>
     <string name="calm_mode">진정 모드</string>
     <string name="calm_mode_music">잔잔한 음악</string>
-    <string name="calm_mode_music_body">바흐 골드베르크 변주곡(CC0) 저음량 · 곡 순환</string>
+    <string name="calm_mode_music_body">바흐 골드베르크 변주곡 느린 악장 5곡(CC0) · 저음량 · 매번 다른 곡</string>
     <string name="calm_mode_story">이야기 듣기</string>
     <string name="calm_mode_story_body">차량 음성이 잔잔한 이야기를 읽어 줘요</string>
-    <string name="calm_evidence">켄넬 연구 기반: 잔잔한 음악·오디오북은 휴식↑ 짖음↓ (효과는 완만, 같은 곡 반복 시 7일 내 습관화). 저주파 노이즈는 근거가 없어 제외했어요.</string>
+    <string name="calm_evidence">켄넬 연구 기반: 잔잔한 음악·오디오북은 휴식↑ 짖음↓ (효과는 완만, 같은 곡을 반복하면 수일 내 습관화). 저주파 노이즈는 근거가 없어 제외했어요.</string>
     <string name="tile_calm_body">잔잔한 음악 또는 이야기로 긴장을 낮춰요</string>
     <string-array name="calm_story">
         <item>%1$s야, 오늘은 천천히 가는 날이야.</item>
@@ -378,4 +378,8 @@
     <string name="pet_alone_hvac_caution_fmt">실내 %1$d° · 공조 꺼짐 — 돌아오면 공조를 켜 주세요</string>
     <string name="action_close">닫기</string>
     <string name="pre_exit_line_off_prefix_fmt">적정 %1$.0f–%2$.0f°C · </string>
+    <string name="check_crate">케이지</string>
+    <string name="check_confirmed">착용 확인함</string>
+    <string name="check_harness_confirm">하네스 착용 확인</string>
+    <string name="check_crate_confirm">케이지 고정 확인</string>
 </resources>

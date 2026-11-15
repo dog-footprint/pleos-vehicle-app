@@ -57,9 +57,9 @@ import kotlinx.coroutines.delay
 private const val NOTICE_MS = 4_000L
 
 private enum class Route(val path: String, val labelRes: Int, val icon: Int) {
-    NOW("now", R.string.nav_now, R.drawable.ic_thermostat),
+    NOW("now", R.string.nav_now, R.drawable.ic_health_and_safety),
     FOOTPRINTS("footprints", R.string.nav_footprints, R.drawable.ic_footprint),
-    PROFILE("profile", R.string.nav_profile, R.drawable.ic_pets),
+    PROFILE("profile", R.string.nav_profile, R.drawable.ic_badge),   // outlined like the other three (ic_pets is a filled glyph)
     SETTINGS("settings", R.string.nav_settings, R.drawable.ic_settings),
 }
 
@@ -88,7 +88,8 @@ fun DogFootprintApp(vm: CareViewModel) {
         Row(Modifier.fillMaxSize()) {
             val backStack by nav.currentBackStackEntryAsState()
             val current = backStack?.destination
-            NavRail(selected = { route -> current?.hierarchy?.any { it.route == route.path } == true }) { route ->
+            // Routes with arguments ("footprints?trip={trip}") must still light their tab.
+            NavRail(selected = { route -> current?.hierarchy?.any { it.route?.substringBefore('?') == route.path } == true }) { route ->
                 nav.navigate(route.path) {
                     popUpTo(nav.graph.startDestinationId) { saveState = true }
                     launchSingleTop = true

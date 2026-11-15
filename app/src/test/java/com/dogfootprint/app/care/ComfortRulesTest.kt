@@ -207,14 +207,23 @@ class ComfortRulesTest {
     fun `trip end resets break, meal, boarding and alert state`() {
         val s = CareState(
             aboard = true, drivenSinceBreakSec = 5400, breakPhase = BreakPhase.DUE, mealNotice = MealNotice.WARN, heatAlert = true,
-            alerts = listOf(Alert(AlertKind.BELT, AlertLevel.CAUTION, AlertContext.DRIVING)), dismissedCautions = setOf(AlertKind.BELT),
+            alerts = listOf(Alert(AlertKind.BELT, AlertLevel.CAUTION, AlertContext.DRIVING)), dismissedCautions = setOf(AlertKind.BELT), restraintConfirmed = true,
             data = com.dogfootprint.app.data.AppData(aboardDogId = "d", lastMealAt = 1L),
         ).afterTripEnd()
         assertEquals(0, s.drivenSinceBreakSec); assertEquals(BreakPhase.NONE, s.breakPhase)
         assertEquals(MealNotice.NONE, s.mealNotice); assertFalse(s.heatAlert); assertFalse(s.aboard)
         assertTrue(s.alerts.isEmpty()); assertTrue(s.dismissedCautions.isEmpty())
         assertEquals(null, s.data.lastMealAt); assertEquals(null, s.data.aboardDogId)
-        assertEquals(null, s.trip)
+        assertEquals(null, s.trip); assertFalse(s.restraintConfirmed)
+    }
+
+    @Test
+    fun `restraint counts when the buckle senses a clip or the driver confirmed by hand`() {
+        assertTrue(restraintOk(beltBuckled = true, confirmed = false))
+        assertTrue(restraintOk(beltBuckled = false, confirmed = true))
+        assertTrue(restraintOk(beltBuckled = null, confirmed = true))   // crate / no sensor
+        assertFalse(restraintOk(beltBuckled = false, confirmed = false))
+        assertFalse(restraintOk(beltBuckled = null, confirmed = false))
     }
 
     @Test
