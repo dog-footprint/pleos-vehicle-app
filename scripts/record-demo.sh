@@ -6,6 +6,7 @@
 #   scripts/record-demo.sh build/demo --from-scene 9  # keep earlier segments, rebuild the state, continue from 9
 #   scripts/record-demo.sh build/demo --from-scene 1 --to-scene 5   # re-take one segment's scenes (same segment numbers)
 #   scripts/record-demo.sh --list                     # scene numbers
+#   scripts/record-demo.sh build/story --story       # scenes 1–6 with the six-panel storyboard's lines as captions
 #
 # Prereqs: emulator `Pleos_Connect` running, debug build installed (DemoReceiver, seed intent). Everything
 # off-screen goes through `adb broadcast` or `vehicle-sim.sh`; the Settings tab is never opened on camera.
@@ -17,11 +18,12 @@ source scripts/env.sh
 
 V=scripts/vehicle-sim.sh; T=scripts/tap-text.sh
 PKG=com.dogfootprint.app
-FROM=1; TO=14; OUT=""
+FROM=1; TO=14; OUT=""; STORY=0
 while [[ $# -gt 0 ]]; do
   case $1 in
     --from-scene) FROM=$2; shift 2 ;;
     --to-scene) TO=$2; shift 2 ;;
+    --story) STORY=1; TO=6; shift ;;
     --list) echo "1 intro  2 profile  3 board  4 harness  5 depart  6 heat  7 window  8 break  9 arrive  10 preexit  11 alone  12 return  13 footprints  14 outro"; exit 0 ;;
     *) OUT=$1; shift ;;
   esac
@@ -95,10 +97,22 @@ d = [s for s in d if s["segment"] != seg] + [{"segment": seg, "host_start": a, "
 json.dump(sorted(d, key=lambda s: s["segment"]), open(p, "w"))
 PY
 }
+story_caption() {         # --story: the storyboard's six panels (docs/demo/README.md), one line each
+  case $1 in
+    intro)   echo "10분 만에 32도?! — 바깥 21°C여도 차 안은 10분이면 32°C" ;;
+    profile) echo "견종 바꾸면 적정 온도도 착! 허스키 18–22°C ↔ 퍼그 19–21°C" ;;
+    board)   echo "밥 먹은 지 1시간! 살살 출발~ (마지막 식사 시간을 고르면 멀미 주의)" ;;
+    harness) echo "하네스 장착 완료! 안전 출발! (체크리스트에서 착용 확인)" ;;
+    depart)  echo "진정 사운드에 마음이 사르르~ (바흐 골드베르크 느린 악장, 저음량)" ;;
+    heat)    echo "더워지면 알아서 쿨링! 27°C → 설정 21°C로 자동 조절 (차량 제어 실험 기능)" ;;
+    *)       echo "$2" ;;
+  esac
+}
 scene() {                 # scene <n> <id> <caption>: caption shown until the next scene / segment end
   [[ $RECORDING = 1 ]] || start_segment
-  local t; t=$(python3 -c "print(round($(now) - $SEG_START, 2))")
-  python3 - "$SCENES_FILE" "$2" "$SEG" "$t" "$3" <<'PY'
+  local t cap; t=$(python3 -c "print(round($(now) - $SEG_START, 2))")
+  cap=$3; [[ $STORY = 1 ]] && cap=$(story_caption "$2" "$3")
+  python3 - "$SCENES_FILE" "$2" "$SEG" "$t" "$cap" <<'PY'
 import json, sys, os
 p, sid, seg, t, cap = sys.argv[1], sys.argv[2], int(sys.argv[3]), float(sys.argv[4]), sys.argv[5]
 d = json.load(open(p)) if os.path.exists(p) else {"scenes": []}
@@ -174,7 +188,7 @@ prepare() {               # bring the app to the state scene N expects, without 
 
 # ---------------------------------------------------------------- scenes (captions describe only what is on screen)
 s1()  { scene 1 intro "차 안의 반려견 — 바깥 21°C면 10분 만에 실내 32°C, 열사병은 7마리 중 1마리가 목숨을 잃습니다"; sleep 5; }
-s2()  { scene 2 profile "프로필: 견종을 바꾸면 적정 온도가 바뀝니다 (허스키 18–22°C → 퍼그 20–21°C)"
+s2()  { scene 2 profile "프로필: 견종을 바꾸면 적정 온도가 바뀝니다 (허스키 18–22°C → 퍼그 19–21°C)"
         # Coordinate taps (editor layout is fixed): row, 변경, size group, breed — under 10 s
         rail 프로필; sleep 1.2; adb shell input tap 1330 390; sleep 1.2; adb shell input tap 1920 509; sleep 0.8
         adb shell input tap 1841 509; sleep 0.8; adb shell input tap 2115 585; sleep 2.2
@@ -213,3 +227,4 @@ DEV_OFFSET=$(python3 -c "import subprocess,time; d=float(subprocess.check_output
 echo "device clock offset: ${DEV_OFFSET}s"
 if [[ $FROM -le 1 && $TO -ge 14 ]]; then rm -f "$OUT"/demo-*.webm "$SCENES_FILE" "$SEGS_FILE" "$OUT/tts_segment_events.json" "$OUT/events.json"; seed; else prepare "$FROM"; fi
 for n in $(seq "$FROM" "$TO"); do "s$n"; done
+if [[ $STORY = 1 ]]; then sleep 3; fi   # hold the cooled-down home as the last frame

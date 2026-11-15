@@ -98,16 +98,20 @@ Settings → 데모 트리거 reproduces the same situations without the console
 
 ### Demo video
 
-[`docs/demo/dog-footprint-demo.mp4`](docs/demo/dog-footprint-demo.mp4) (3 min, 1080p, with the emulator's audio — the
-Pleos TTS voice and the calming sound are real). It is produced entirely by scripts, so it can be re-recorded after any
+[`docs/demo/dog-footprint-demo.mp4`](docs/demo/dog-footprint-demo.mp4) (3 min 26 s, 1080p; the calming sound is the emulator's audio, the
+Pleos TTS lines are re-synthesized — see `docs/demo/README.md`). It is produced entirely by scripts, so it can be re-recorded after any
 change:
 
 ```bash
-scripts/record-demo.sh build/demo        # night mode, cold-starts the app, seeds 코코, drives the scenario, records 2 segments + scenes.json
+scripts/record-demo.sh build/demo        # night mode, cold-starts the app, seeds 코코, drives the scenario, records the segments + scenes.json
 scripts/make-demo-video.sh build/demo docs/demo/dog-footprint-demo.mp4   # concat, Korean caption strip below the video, loudness-normalised audio
 ```
 
-The emulator's recorder stops at 180 s per file, hence the two segments. Captions live in `record-demo.sh` next to each scene.
+The emulator's recorder stops at 180 s per file, hence the segments (the 30 s pet-alone wait is also cut between two of them).
+
+A second, shorter cut follows the team's six-panel storyboard (cabin heat → breed change → meal time → harness → calming sound →
+auto cooling): [`docs/demo/dog-footprint-story.mp4`](docs/demo/dog-footprint-story.mp4) (1 min 34 s), recorded with
+`scripts/record-demo.sh build/story --story` and rendered the same way. Same scenes 1–6, the storyboard's lines as captions. Captions live in `record-demo.sh` next to each scene.
 
 ### Emulator facts worth knowing (verified on Pleos Connect v2.1.0)
 

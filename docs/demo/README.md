@@ -4,6 +4,10 @@
 
 - `dog-footprint-demo.mp4` — the scripted demo (emulator capture + caption strip), made by
   `scripts/record-demo.sh build/demo` then `scripts/make-demo-video.sh build/demo docs/demo/dog-footprint-demo.mp4`.
+- `dog-footprint-story.mp4` — the six-panel storyboard cut (1:34): scenes 1–6 only, captions are the storyboard's lines
+  (`story_caption` in `record-demo.sh`). Made by `scripts/record-demo.sh build/story --story` then
+  `scripts/make-demo-video.sh build/story docs/demo/dog-footprint-story.mp4 --voice synth`. Panel 6 says "19도로 쿨링";
+  the app sets the band-based target (21 °C for a husky) and the cabin reading returns to 19 °C, so the caption says both.
 - `scripts/check-demo.py` — run by `make-demo-video.sh` after rendering: one row per voice line (sound ≥ −35 dB within
   ±2 s?) and the count of frames where the Settings tab was selected. The render exits non-zero when either fails.
 - `scripts/record-demo.sh build/demo --from-scene N` — re-records from scene N (state is rebuilt off camera), so an
