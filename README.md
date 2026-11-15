@@ -9,7 +9,7 @@ Contest rules, SDK status and deadlines: [docs/CONTEST.md](docs/CONTEST.md). Evi
 
 ## APK
 
-- Location: [`apk/개발바닥_dog-footprint_release.apk`](apk/) — also attached to the GitHub Release [v0.1.1](https://github.com/dog-footprint/pleos-vehicle-app/releases/tag/v0.1.1) together with the demo video
+- Location: [`apk/개발바닥_dog-footprint_release.apk`](apk/) — the same file is attached to the GitHub Release [v0.1.1](https://github.com/dog-footprint/pleos-vehicle-app/releases/tag/v0.1.1) as `dog-footprint_dog-footprint_release.apk` (GitHub strips non-ASCII characters from asset names), together with the demo videos
 - Build: release build, signed (v3), minSdk 28 / targetSdk 35
 
 ## How to run
